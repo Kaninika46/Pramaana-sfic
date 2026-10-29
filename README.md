@@ -30,7 +30,6 @@ against recorded hashes at `/verify`.
 | `legal_rules.json` | Legal references, deadline rules, engineering-audit flags |
 | `templates/`, `static/` | UI (no external assets; strict CSP) |
 | `tests/` | `unittest` suites |
-| `backup_pre_upgrade_20261029/` | Untouched copy of the original code and database |
 
 ## Windows PowerShell
 

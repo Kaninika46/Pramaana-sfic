@@ -1,18 +1,40 @@
 # secrets and claimant data — never commit
 instance/
 uploads/
+dossiers/
+dossiers/*/
 *.db
+*.sqlite
+*.sqlite3
 *.json.key
 *service-account*.json
 .env
-# generated
-dossiers/*/
-__pycache__/
-.venv/
-# copyrighted reference papers — keep local, never publish
+.env.*
+
+# local backups and copyrighted reference papers — keep local, never publish
+backup_pre_upgrade_*/
 docs/references/
-# large, regenerable validation samples
+
+# generated runtime logs, legacy demo images, and large regenerable validation samples
+*.log
+artifacts/*_JL-*.png
 artifacts/validation/*_samples.json
 artifacts/validation/rf_samples_latest.json
-# generated dossier PDFs may contain claim details
-dossiers/
+
+# Python / virtual environments / testing
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
