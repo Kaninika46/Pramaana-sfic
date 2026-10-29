@@ -23,7 +23,8 @@ against recorded hashes at `/verify`.
 | `pramaana_store.py` | SQLite schema/migrations, cases, evidence, analyses, documents, audit chain |
 | `pramaana_rules.py` | Deadline assessment and missing-information checklist |
 | `pramaana_dossier.py` | Case dossier PDF generator |
-| `pramaana_text.py` | Display labels, bilingual field labels, consent text |
+| `pramaana_text.py` | Display labels, bilingual field labels, consent text (English and Bengali) |
+| `pramaana_i18n.py` | English / Bengali text for farmer-facing pages |
 | `gee_fetcher.py` | Earth Engine init, per-case Sentinel-1/Sentinel-2 analysis (+ legacy bundle code) |
 | `pramaana_engine.py` | Legacy PDF generator and `legal_rules.json` loader |
 | `legal_rules.json` | Legal references, deadline rules, engineering-audit flags |
@@ -67,6 +68,20 @@ default exists).
 
 - Earth Engine analysis has been run live (project configured via `GEE_PROJECT_ID`). The flood model has now been validated
   against Sentinel-2 (see below) and the per-case analysis has been run live; it still needs field validation.
+- Legal references need professional verification — see `software_audit_flags` in `legal_rules.json`.
+- No field test has been carried out yet — see `docs/FIELD_TESTING.md` (planned: Gahira, Paschim Medinipur).
+- Farmer pages can be switched between English and Bengali. The Bengali text, including the
+  Bengali consent text (marked as a draft), needs review by a native speaker and the legal lead.
+- Not production-ready: single-process rate limiting, SQLite, no backups, no HTTPS termination.
+
+## Language (English / বাংলা)
+
+Farmer-facing pages (home, report, report received, track, case page, verify, errors) have an
+English | বাংলা switch in the header; the choice is kept in a cookie. Reviewer pages, the About page
+and the dossier PDF stay English. All farmer-page text is in `pramaana_i18n.py` (one place to
+review); field labels, statuses and the consent text are in `pramaana_text.py`. The Bengali consent
+is shown as a draft, with the English original beside it, until `CONSENT_BN_REVIEWED = True`;
+each case records which consent version (English or Bengali) was shown.
 
 ## Flood model accuracy
 

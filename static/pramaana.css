@@ -69,6 +69,16 @@ ul.bullets li + li { margin-top: .3rem; }
 .nav a:hover, .nav button:hover { background: rgba(255,255,255,.08); }
 .nav a[aria-current="page"] { border-color: var(--accent-blue); background: rgba(56,189,248,.12); }
 .nav form { display: inline; }
+.lang-switch { display: flex; gap: .25rem; align-items: center; }
+.lang-switch a {
+  color: #e0f2fe; text-decoration: none; padding: .35rem .65rem; border-radius: 6px; font-size: .9rem;
+  font-weight: 600; border: 1px solid var(--border-strong);
+}
+.lang-switch a:hover { background: rgba(255,255,255,.08); }
+.lang-switch a[aria-current="true"] { border-color: var(--accent-blue); background: rgba(56,189,248,.18); color: #fff; }
+/* Bengali script reads poorly in capitals-style spacing and needs a little more line height. */
+:lang(bn) .brand-sub { text-transform: none; letter-spacing: 0; font-size: .8rem; }
+html:lang(bn) body { line-height: 1.65; }
 
 main { flex: 1; width: 100%; max-width: 1240px; margin: 0 auto; padding: 1.2rem 1rem 3rem; }
 main.narrow { max-width: 760px; }

@@ -67,7 +67,8 @@ from pramaana_store import (
     sha256_file,
     sha256_text,
 )
-from pramaana_text import CONSENT_TEXT, CONSENT_VERSION, FARMER_STATUS, FIELD, LABELS
+import pramaana_i18n as i18n
+from pramaana_text import CONSENT, CONSENT_BN_REVIEWED, FARMER_STATUS, FIELD, LABELS
 
 APP_VERSION = "2.0.0"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -157,6 +158,45 @@ def _bootstrap_reviewer_from_env() -> None:
 _bootstrap_reviewer_from_env()
 
 
+# --------------------------------------------------------------------------- language
+@app.before_request
+def _set_language() -> None:
+    """Farmer pages follow the visitor's choice (cookie); all other pages stay English."""
+    chosen = i18n.normalise(request.cookies.get(i18n.LANG_COOKIE))
+    g.lang = chosen if request.endpoint in i18n.FARMER_ENDPOINTS else i18n.DEFAULT_LANG
+
+
+def current_lang() -> str:
+    return getattr(g, "lang", i18n.DEFAULT_LANG)
+
+
+def tr(key: str, **params: Any) -> str:
+    """Translated text for the current request."""
+    return i18n.t(key, current_lang(), **params)
+
+
+def field_label(name: str) -> str:
+    en, bn = FIELD[name]
+    return bn if current_lang() == "bn" and bn else en
+
+
+def _safe_next(target: Optional[str]) -> str:
+    """Only same-site paths, so the language link cannot redirect elsewhere."""
+    if not target or not target.startswith("/") or target.startswith("//") or "\\" in target:
+        return url_for("index")
+    return target
+
+
+@app.route("/lang/<code>")
+def set_language(code: str) -> Any:
+    if code not in i18n.SUPPORTED:
+        abort(404)
+    resp = redirect(_safe_next(request.args.get("next")))
+    resp.set_cookie(i18n.LANG_COOKIE, code, max_age=365 * 24 * 3600, httponly=True,
+                    samesite="Lax", secure=app.config["SESSION_COOKIE_SECURE"])
+    return resp
+
+
 # --------------------------------------------------------------------------- security
 @app.before_request
 def _csrf_protect() -> None:
@@ -164,8 +204,7 @@ def _csrf_protect() -> None:
         sent = request.form.get("csrf_token", "")
         expected = session.get("csrf_token", "")
         if not expected or not hmac.compare_digest(sent, expected):
-            abort(400, description="Your form session expired or is invalid. "
-                                   "Please go back, reload the page and try again.")
+            abort(400, description=tr("err.csrf"))
 
 
 def csrf_token() -> str:
@@ -251,30 +290,39 @@ def _template_globals() -> Dict[str, Any]:
         "app_version": APP_VERSION,
         "fmt_size": fmt_size,
         "mask_phone": mask_phone,
+        "lang": current_lang(),
+        "t": tr,
+        "fl": field_label,
+        "lang_names": i18n.LANG_NAMES,
+        "farmer_page": request.endpoint in i18n.FARMER_ENDPOINTS,
+        "js_i18n": i18n.js_strings(current_lang()),
     }
 
 
 @app.template_filter("label")
 def _label_filter(value: Any, group: str) -> str:
+    if current_lang() == "bn" and (value or "") in i18n.LABELS_BN.get(group, {}):
+        return i18n.LABELS_BN[group][value]
     return LABELS.get(group, {}).get(value or "", value or "—")
 
 
 @app.errorhandler(HTTPException)
 def _http_error(exc: HTTPException) -> Any:
     if isinstance(exc, RequestEntityTooLarge):
-        exc.description = (f"The upload is too large. Each file may be up to "
-                           f"{MAX_FILE_BYTES // 1048576} MB.")
+        exc.description = tr("err.too_large", mb=MAX_FILE_BYTES // 1048576)
     if request.path.startswith("/api/"):
         return jsonify({"status": "error", "code": exc.code, "message": exc.description}), exc.code
-    return render_template("error.html", code=exc.code, message=exc.description), exc.code
+    message = exc.description
+    if current_lang() == "bn" and message == type(exc).description:
+        # Werkzeug's built-in English text; our own messages are already translated.
+        message = tr("error.generic_404") if exc.code == 404 else tr("error.generic")
+    return render_template("error.html", code=exc.code, message=message), exc.code
 
 
 @app.errorhandler(Exception)
 def _unexpected_error(exc: Exception) -> Any:
     app.logger.exception("Unhandled error")
-    return render_template("error.html", code=500,
-                           message="Something went wrong on the server. Nothing you entered "
-                                   "has been published. Please try again."), 500
+    return render_template("error.html", code=500, message=tr("err.server")), 500
 
 
 # --------------------------------------------------------------------------- uploads
@@ -364,15 +412,16 @@ def collect_uploads() -> Tuple[List[Dict[str, Any]], List[str]]:
             data = storage.read(MAX_FILE_BYTES + 1)
             name = os.path.basename(storage.filename)[:150]
             if not data:
-                errors.append(f"'{name}' is empty and was not accepted.")
+                errors.append(tr("err.file_empty", name=name))
                 continue
             if len(data) > MAX_FILE_BYTES:
-                errors.append(f"'{name}' is larger than {MAX_FILE_BYTES // 1048576} MB.")
+                errors.append(tr("err.file_too_large", name=name, mb=MAX_FILE_BYTES // 1048576))
                 continue
             mime = sniff_mime(data)
             if mime not in allowed:
-                errors.append(f"'{name}' is not an accepted {LABELS['evidence_kind'][kind].lower()} "
-                              f"file type.")
+                kind_label = _label_filter(kind, "evidence_kind")
+                errors.append(tr("err.file_type", name=name,
+                                 kind=kind_label.lower() if current_lang() == "en" else kind_label))
                 continue
             client = hash_lookup.get((storage.filename, len(data)))
             if client and not re.fullmatch(r"[0-9a-f]{64}", str(client)):
@@ -380,7 +429,7 @@ def collect_uploads() -> Tuple[List[Dict[str, Any]], List[str]]:
             items.append({"kind": kind, "name": name, "data": data, "mime": mime,
                           "ext": allowed[mime], "client_sha256": client})
     if len(items) > MAX_FILES_PER_SUBMISSION:
-        errors.append(f"Please upload at most {MAX_FILES_PER_SUBMISSION} files at a time.")
+        errors.append(tr("err.too_many_files", n=MAX_FILES_PER_SUBMISSION))
     return items, errors
 
 
@@ -467,17 +516,17 @@ def parse_case_form() -> Tuple[Dict[str, Any], Dict[str, str]]:
     }
     for key in ("claimant_name", "village", "crop", "incident_date", "damage_description"):
         if not f[key]:
-            errors[key] = "This is required."
+            errors[key] = tr("err.required")
     if f["claimant_name"] and len(f["claimant_name"]) < 2:
-        errors["claimant_name"] = "Please enter the full name."
+        errors["claimant_name"] = tr("err.full_name")
     if not f["damage_type"]:
-        errors["damage_type"] = "Please choose what happened."
+        errors["damage_type"] = tr("err.damage_type")
     if f["phone"]:
         digits = re.sub(r"\D", "", f["phone"])
         if digits.startswith("91") and len(digits) == 12:
             digits = digits[2:]
         if not re.fullmatch(r"[6-9]\d{9}", digits):
-            errors["phone"] = "Enter a 10-digit Indian mobile number, or leave it empty."
+            errors["phone"] = tr("err.phone")
         else:
             f["phone"] = digits
     today = datetime.datetime.now(datetime.timezone.utc).date()
@@ -485,13 +534,13 @@ def parse_case_form() -> Tuple[Dict[str, Any], Dict[str, str]]:
         try:
             day = datetime.date.fromisoformat(f["incident_date"])
             if day > today + datetime.timedelta(days=1):
-                errors["incident_date"] = "The date cannot be in the future."
+                errors["incident_date"] = tr("err.future")
             elif day < datetime.date(2015, 1, 1):
-                errors["incident_date"] = "Please check the year."
+                errors["incident_date"] = tr("err.year")
         except ValueError:
-            errors["incident_date"] = "Use the date picker (YYYY-MM-DD)."
+            errors["incident_date"] = tr("err.date_format")
     if f["incident_time"] and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", f["incident_time"]):
-        errors["incident_time"] = "Use 24-hour time, for example 06:30."
+        errors["incident_time"] = tr("err.time_format")
     for key, lo, hi in (("area_acres", 0.001, 1000.0), ("reported_affected_pct", 0.0, 100.0)):
         raw = _clean(key, 20)
         f[key] = None
@@ -502,7 +551,7 @@ def parse_case_form() -> Tuple[Dict[str, Any], Dict[str, str]]:
                     raise ValueError
                 f[key] = val
             except ValueError:
-                errors[key] = f"Enter a number between {lo:g} and {hi:g}."
+                errors[key] = tr("err.number_range", lo=f"{lo:g}", hi=f"{hi:g}")
     lat_raw, lon_raw = _clean("latitude", 20), _clean("longitude", 20)
     f.update(latitude=None, longitude=None, location_source="none",
              location_accuracy_m=None, location_captured_at_utc=None)
@@ -519,9 +568,9 @@ def parse_case_form() -> Tuple[Dict[str, Any], Dict[str, str]]:
                 except ValueError:
                     pass
         except ValueError as exc:
-            errors["latitude"] = str(exc)
+            errors["latitude"] = str(exc) if current_lang() == "en" else tr("err.coordinates")
     if request.form.get("consent") != "yes":
-        errors["consent"] = "Consent is needed before the report can be saved."
+        errors["consent"] = tr("err.consent")
     return f, errors
 
 
@@ -531,41 +580,50 @@ def index() -> str:
     return render_template("home.html")
 
 
+def _consent_context() -> Dict[str, Any]:
+    lang = current_lang()
+    return {"consent_text": CONSENT[lang][0], "consent_lang": lang,
+            "consent_original": CONSENT["en"][0] if lang != "en" else None,
+            "consent_is_draft": lang == "bn" and not CONSENT_BN_REVIEWED}
+
+
 @app.route("/report", methods=["GET", "POST"])
 def report() -> Any:
     if request.method == "GET":
         return render_template("report.html", values={}, errors={}, file_errors=[],
-                               submission_id=uuid.uuid4().hex, consent_text=CONSENT_TEXT)
+                               submission_id=uuid.uuid4().hex, **_consent_context())
     submission_id = re.sub(r"[^0-9a-f]", "", request.form.get("submission_id", ""))[:32] or None
     if submission_id:
         existing = store.find_case_by_submission_id(submission_id)
         if existing:
-            flash("This report was already received. Showing the saved case.", "info")
+            flash(tr("report.already"), "info")
             return redirect(url_for("report_done", case_id=existing))
     ip = request.remote_addr or "?"
     if submit_limiter.blocked(ip):
-        abort(429, description="Too many reports from this device. Please wait and try again.")
+        abort(429, description=tr("err.too_many_reports"))
     fields, errors = parse_case_form()
     items, file_errors = collect_uploads()
     if errors or file_errors:
         return render_template("report.html", values=request.form, errors=errors,
                                file_errors=file_errors, submission_id=submission_id or uuid.uuid4().hex,
-                               consent_text=CONSENT_TEXT), 422
+                               **_consent_context()), 422
     submit_limiter.hit(ip)
     case_id = store.new_case_id(fields["record_type"])
     tracking_code = "".join(secrets.choice("ABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(8))
     ts = now_utc()
+    # Record the consent text actually shown: the form says which language it displayed.
+    consent_version = CONSENT[i18n.normalise(request.form.get("consent_lang"))][1]
     fields.update(
         case_id=case_id, status="SUBMITTED", created_at_utc=ts, updated_at_utc=ts,
         client_submission_id=submission_id, tracking_token_hash=sha256_text(tracking_code),
         incident_start_utc=incident_start_utc(fields["incident_date"], fields["incident_time"]),
-        consent_given=1, consent_version=CONSENT_VERSION, consent_at_utc=ts,
+        consent_given=1, consent_version=consent_version, consent_at_utc=ts,
     )
     store.insert_case(fields)
     actor = "claimant-or-field-operator (not signed in)"
     store.append_audit(case_id, "CASE_SUBMITTED", "submitter", actor,
                        f"record_type={fields['record_type']}", new_status="SUBMITTED")
-    store.append_audit(case_id, "CONSENT_RECORDED", "submitter", actor, CONSENT_VERSION)
+    store.append_audit(case_id, "CONSENT_RECORDED", "submitter", actor, consent_version)
     store_uploads(case_id, items, "submitter", actor)
     issued = session.get("issued_codes", {})
     issued[case_id] = tracking_code
@@ -578,7 +636,7 @@ def report() -> Any:
 def report_done(case_id: str) -> str:
     case = store.get_case(case_id)
     if not case or session.get("tracked_case") != case_id:
-        abort(404, description="Case not found in this browser session. Use 'Track a case'.")
+        abort(404, description=tr("err.case_not_in_session"))
     code = session.get("issued_codes", {}).get(case_id)
     return render_template("report_done.html", case=case, tracking_code=code,
                            evidence=store.list_evidence(case_id))
@@ -590,14 +648,14 @@ def track() -> Any:
         return render_template("track.html", error=None)
     ip = request.remote_addr or "?"
     if track_limiter.blocked(ip):
-        abort(429, description="Too many attempts. Please wait 15 minutes.")
+        abort(429, description=tr("err.too_many_attempts"))
     case_id = (request.form.get("case_id") or "").strip().upper()
     code = (request.form.get("tracking_code") or "").strip().upper().replace(" ", "")
     case = store.get_case(case_id)
     if not case or not case["tracking_token_hash"] or not hmac.compare_digest(
             case["tracking_token_hash"], sha256_text(code)):
         track_limiter.hit(ip)
-        return render_template("track.html", error="Case ID or tracking code is not correct."), 401
+        return render_template("track.html", error=tr("track.bad_code")), 401
     session["tracked_case"] = case_id
     return redirect(url_for("track_case", case_id=case_id))
 
@@ -605,7 +663,7 @@ def track() -> Any:
 def _tracked_case_or_404(case_id: str) -> Dict[str, Any]:
     case = store.get_case(case_id)
     if not case or session.get("tracked_case") != case_id:
-        abort(404, description="Open this case from 'Track a case' with your tracking code.")
+        abort(404, description=tr("err.open_from_track"))
     return case
 
 
@@ -615,10 +673,16 @@ def track_case(case_id: str) -> str:
     evidence = store.list_evidence(case_id)
     notes = [a for a in store.list_audit(case_id) if a["action"] == "STATUS_CHANGE"]
     docs = [d for d in store.list_documents(case_id) if d["status"] == "active"]
+    status = FARMER_STATUS.get(case["status"], FARMER_STATUS["SUBMITTED"])
+    bn = current_lang() == "bn"
+    deadline = assess_deadline(case, load_legal_rules())
+    if bn:
+        deadline["message"] = i18n.deadline_message_bn(deadline)
     return render_template(
         "track_case.html", case=case, evidence=evidence, notes=notes,
-        farmer_status=FARMER_STATUS.get(case["status"], FARMER_STATUS["SUBMITTED"]),
-        deadline=assess_deadline(case, load_legal_rules()), latest_doc=docs[0] if docs else None,
+        farmer_status={"text": status["bn"] if bn else status["en"],
+                       "next": status["next_bn"] if bn else status["next"]},
+        deadline=deadline, latest_doc=docs[0] if docs else None,
         server_now_ms=int(time.time() * 1000),
     )
 
@@ -627,15 +691,15 @@ def track_case(case_id: str) -> str:
 def track_add_evidence(case_id: str) -> Any:
     case = _tracked_case_or_404(case_id)
     if case["status"] in ("CLOSED", "ERASED"):
-        abort(409, description="This case no longer accepts new files.")
+        abort(409, description=tr("err.no_new_files"))
     items, errors = collect_uploads()
     for e in errors:
         flash(e, "error")
     if items:
         store_uploads(case_id, items, "submitter", "claimant-or-field-operator (tracking code)")
-        flash(f"{len(items)} file(s) received and fingerprinted.", "success")
+        flash(tr("case.files_received", count=len(items)), "success")
     elif not errors:
-        flash("Please choose at least one file.", "error")
+        flash(tr("case.choose_file"), "error")
     return redirect(url_for("track_case", case_id=case_id))
 
 
@@ -646,7 +710,7 @@ def track_erasure_request(case_id: str) -> Any:
         store.update_case_fields(case_id, {"erasure_requested_at_utc": now_utc()})
         store.append_audit(case_id, "ERASURE_REQUESTED", "submitter",
                            "claimant-or-field-operator (tracking code)")
-    flash("Your deletion request is recorded. An administrator will carry it out.", "success")
+    flash(tr("case.erasure_recorded"), "success")
     return redirect(url_for("track_case", case_id=case_id))
 
 
@@ -662,7 +726,7 @@ def verify_file() -> Any:
     if request.method == "POST":
         upload = request.files.get("file")
         if not upload or not upload.filename:
-            result = {"error": "Choose a file to check."}
+            result = {"error": tr("verify.choose")}
         else:
             hasher = hashlib.sha256()
             for chunk in iter(lambda: upload.stream.read(65536), b""):

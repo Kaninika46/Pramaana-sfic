@@ -5,6 +5,19 @@
   "use strict";
   document.documentElement.classList.add("js");
 
+  // ---------------------------------------------------------------- text
+  // Page-language strings come from a JSON data block written by the server
+  // (base.html); the English text here is only a fallback.
+  const I18N = (function () {
+    try { return JSON.parse(document.getElementById("i18n-data").textContent) || {}; }
+    catch (e) { return {}; }
+  })();
+  function T(key, fallback, params) {
+    let text = I18N[key] || fallback;
+    Object.keys(params || {}).forEach(function (k) { text = text.split("{" + k + "}").join(String(params[k])); });
+    return text;
+  }
+
   // ---------------------------------------------------------------- SHA-256
   // Pure-JS fallback for phones on plain-HTTP LAN addresses, where
   // window.crypto.subtle is unavailable. (Kept from the original app.)
@@ -77,13 +90,16 @@
         for (const file of input.files) {
           const li = document.createElement("li");
           if (maxBytes && file.size > maxBytes) {
-            li.textContent = file.name + " — too large (" + formatSize(file.size) + "), it will be rejected";
+            li.textContent = T("file_too_large", "{name} — too large ({size}), it will be rejected",
+              { name: file.name, size: formatSize(file.size) });
             li.className = "field-error";
           } else {
-            li.textContent = file.name + " (" + formatSize(file.size) + ") — fingerprinting…";
+            li.textContent = T("file_hashing", "{name} ({size}) — fingerprinting…",
+              { name: file.name, size: formatSize(file.size) });
             const hex = await sha256File(file);
             all.push({ name: file.name, size: file.size, sha256: hex });
-            li.textContent = file.name + " (" + formatSize(file.size) + ") — SHA-256 " + hex.slice(0, 16) + "…";
+            li.textContent = T("file_hashed", "{name} ({size}) — SHA-256 {hash}…",
+              { name: file.name, size: formatSize(file.size), hash: hex.slice(0, 16) });
           }
           if (list) list.appendChild(li);
         }
@@ -103,10 +119,10 @@
     btn.hidden = false;
     btn.addEventListener("click", function () {
       if (!navigator.geolocation) {
-        status.textContent = "This phone or browser cannot share its location. Type the numbers instead.";
+        status.textContent = T("gps_unsupported", "This phone or browser cannot share its location. Type the numbers instead.");
         return;
       }
-      status.textContent = "Finding location… stand in or next to the field.";
+      status.textContent = T("gps_finding", "Finding location… stand in or next to the field.");
       btn.setAttribute("aria-busy", "true");
       navigator.geolocation.getCurrentPosition(function (pos) {
         lat.value = pos.coords.latitude.toFixed(6);
@@ -114,11 +130,12 @@
         acc.value = Math.round(pos.coords.accuracy);
         src.value = "device_gps";
         btn.removeAttribute("aria-busy");
-        status.textContent = "Location recorded from the phone (accuracy about ±" + Math.round(pos.coords.accuracy) +
-          " m). Check it is the affected field, not your home.";
+        status.textContent = T("gps_recorded", "Location recorded from the phone (accuracy about ±{m} m). " +
+          "Check it is the affected field, not your home.", { m: Math.round(pos.coords.accuracy) });
       }, function (err) {
         btn.removeAttribute("aria-busy");
-        status.textContent = "Could not get location (" + err.message + "). You can type it, or leave it empty.";
+        status.textContent = T("gps_failed", "Could not get location ({err}). You can type it, or leave it empty.",
+          { err: err.message });
       }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
     });
     [lat, lon].forEach(el => el.addEventListener("input", function () { src.value = "manual"; acc.value = ""; }));
@@ -198,7 +215,7 @@
           if (el.type === "radio") el.checked = saved[el.name] === el.value;
           else el.value = saved[el.name];
         });
-        if (note) note.textContent = "Restored a draft saved on this device. Photos must be chosen again.";
+        if (note) note.textContent = T("draft_restored", "Restored a draft saved on this device. Photos must be chosen again.");
       }
     } catch (e) { /* ignore corrupt drafts */ }
     let timer = null;
@@ -207,14 +224,14 @@
       timer = setTimeout(function () {
         const data = {};
         fields.forEach(el => { if (el.type !== "radio" || el.checked) data[el.name] = el.value; });
-        try { store.setItem(key, JSON.stringify(data)); if (note) note.textContent = "Draft saved on this device."; } catch (e) { }
+        try { store.setItem(key, JSON.stringify(data)); if (note) note.textContent = T("draft_saved", "Draft saved on this device."); } catch (e) { }
       }, 600);
     });
     const clear = document.getElementById("draft-clear");
     if (clear) clear.addEventListener("click", function () {
       try { store.removeItem(key); } catch (e) { }
       form.reset();
-      if (note) note.textContent = "Draft cleared.";
+      if (note) note.textContent = T("draft_cleared", "Draft cleared.");
     });
     form.addEventListener("submit", function () { try { store.removeItem(key); } catch (e) { } });
   });
@@ -228,9 +245,10 @@
     const prefix = el.dataset.prefix || "";
     function tick() {
       const left = Math.floor((deadline - (Date.now() + offset)) / 1000);
-      if (left <= 0) { el.textContent = prefix + "window ended"; return; }
+      if (left <= 0) { el.textContent = prefix + T("window_ended", "window ended"); return; }
       const h = Math.floor(left / 3600), m = Math.floor((left % 3600) / 60), s = left % 60;
-      el.textContent = prefix + h + "h " + String(m).padStart(2, "0") + "m " + String(s).padStart(2, "0") + "s left";
+      el.textContent = prefix + T("time_left", "{h}h {m}m {s}s left",
+        { h: h, m: String(m).padStart(2, "0"), s: String(s).padStart(2, "0") });
     }
     tick();
     setInterval(tick, 1000);

@@ -1,58 +1,54 @@
 {% extends "base.html" %}
-{% block title %}Home{% endblock %}
+{% block title %}{{ t('home.title') }}{% endblock %}
 {% block content %}
 <section class="hero">
-  <h1>Organise evidence of flood damage to your crop</h1>
-  <p>Pramaana helps farmers and field helpers in the Ghatal area record suspected flood damage, keep
-    photographs and documents safe with a digital fingerprint, and prepare a clear evidence file
-    (dossier) for a human reviewer. <span class="bn">বন্যায় ফসলের ক্ষতির প্রমাণ গুছিয়ে রাখুন।</span></p>
+  <h1>{{ t('home.h1') }}</h1>
+  <p>{{ t('home.intro') }}</p>
 </section>
 
 <div class="notice notice-warn">
-  <strong>Important:</strong> Pramaana does <strong>not</strong> file an insurance claim or inform your insurer.
-  If your crop is insured, inform the insurer or official channel yourself as soon as possible.
+  {{ t('home.important_html')|safe }}
 </div>
 
 <div class="grid grid-3">
   <a class="choice-card" href="{{ url_for('report') }}">
-    <h2>Report a loss →</h2>
-    <p>Start a new case: your details, the field, the crop, what happened, and photos. About 10 minutes.</p>
-    <p class="bn">নতুন দাবি শুরু করুন</p>
+    <h2>{{ t('home.card_report_h') }}</h2>
+    <p>{{ t('home.card_report_p') }}</p>
   </a>
   <a class="choice-card" href="{{ url_for('track') }}">
-    <h2>Track a case →</h2>
-    <p>Use your case ID and tracking code to see progress, add files, or ask for your data to be deleted.</p>
+    <h2>{{ t('home.card_track_h') }}</h2>
+    <p>{{ t('home.card_track_p') }}</p>
   </a>
   <a class="choice-card" href="{{ url_for('verify_file') }}">
-    <h2>Verify a file →</h2>
-    <p>Check whether a dossier or photo is byte-for-byte identical to the copy Pramaana recorded.</p>
+    <h2>{{ t('home.card_verify_h') }}</h2>
+    <p>{{ t('home.card_verify_p') }}</p>
   </a>
 </div>
 
 <div class="grid grid-2">
   <section class="panel">
-    <h2>What happens to a report</h2>
+    <h2>{{ t('home.flow_h') }}</h2>
     <ol class="flow">
-      <li>You report the suspected loss and give consent.</li>
-      <li>Photos and documents are stored unchanged, and a SHA-256 fingerprint is recorded for each.</li>
-      <li>The field location and how it was recorded (phone GPS or typed) are saved.</li>
-      <li>A reviewer runs satellite analysis — only if Earth Engine is genuinely connected.</li>
-      <li>The reviewer re-checks every file's fingerprint and prepares a labelled dossier.</li>
-      <li>The reviewer records a decision. You see the status and any notes on the tracking page.</li>
+      <li>{{ t('home.flow1') }}</li>
+      <li>{{ t('home.flow2') }}</li>
+      <li>{{ t('home.flow3') }}</li>
+      <li>{{ t('home.flow4') }}</li>
+      <li>{{ t('home.flow5') }}</li>
+      <li>{{ t('home.flow6') }}</li>
     </ol>
   </section>
   <section class="panel">
-    <h2>System status</h2>
+    <h2>{{ t('home.status_h') }}</h2>
     <dl class="kv">
-      <dt>Case storage</dt><dd><span class="badge badge-green">✓ Persistent (SQLite)</span></dd>
-      <dt>Satellite analysis</dt>
-      <dd>{% if ee_state.ready %}<span class="badge badge-green">✓ Earth Engine connected</span>
-          {% else %}<span class="badge badge-amber">! Unavailable</span>
-          <div class="small muted">{{ ee_state.message }}</div>{% endif %}</dd>
-      <dt>Integrations</dt>
-      <dd>None. Pramaana is <strong>not connected</strong> to any insurer, DLSA, court or government portal.</dd>
-      <dt>Field validation</dt>
-      <dd>No field test has been recorded yet. See <a href="{{ url_for('about') }}#field-testing">field-testing plan</a>.</dd>
+      <dt>{{ t('home.storage') }}</dt><dd><span class="badge badge-green">{{ t('home.storage_ok') }}</span></dd>
+      <dt>{{ t('home.satellite') }}</dt>
+      <dd>{% if ee_state.ready %}<span class="badge badge-green">{{ t('home.ee_ok') }}</span>
+          {% else %}<span class="badge badge-amber">{{ t('home.ee_off') }}</span>
+          <div class="small muted" lang="en">{{ ee_state.message }}</div>{% endif %}</dd>
+      <dt>{{ t('home.integrations') }}</dt>
+      <dd>{{ t('home.integrations_html')|safe }}</dd>
+      <dt>{{ t('home.field_validation') }}</dt>
+      <dd>{{ t('home.field_validation_html', url=url_for('about') ~ '#field-testing')|safe }}</dd>
     </dl>
   </section>
 </div>

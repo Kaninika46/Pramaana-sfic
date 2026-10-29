@@ -1,43 +1,40 @@
 {% extends "base.html" %}
 {% from "_macros.html" import record_badge with context %}
-{% block title %}Report received{% endblock %}
+{% block title %}{{ t('done.title') }}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<div class="notice notice-success" role="status"><strong>✓ Your report has been saved.</strong> <span class="bn">আপনার দাবিটি জমা হয়েছে।</span></div>
+<div class="notice notice-success" role="status"><strong>{{ t('done.saved') }}</strong></div>
 <section class="panel">
-  <h1>Keep these two codes safe</h1>
-  <p>You need both to check progress, add photos, or ask for your data to be deleted.
-    Write them down or take a screenshot.</p>
+  <h1>{{ t('done.h1') }}</h1>
+  <p>{{ t('done.intro') }}</p>
   <dl class="kv">
-    <dt>Case ID</dt><dd><span class="code-display">{{ case.case_id }}</span></dd>
-    <dt>Tracking code</dt>
+    <dt>{{ t('done.case_id') }}</dt><dd><span class="code-display">{{ case.case_id }}</span></dd>
+    <dt>{{ t('done.tracking_code') }}</dt>
     <dd>{% if tracking_code %}<span class="code-display">{{ tracking_code }}</span>
-        {% else %}<span class="muted">Shown only once, when the report was first submitted.</span>{% endif %}</dd>
+        {% else %}<span class="muted">{{ t('done.code_once') }}</span>{% endif %}</dd>
   </dl>
-  <p class="small muted">{{ record_badge(case.record_type) }} Saved at {{ case.created_at_utc }} (UTC, server clock).</p>
+  <p class="small muted">{{ record_badge(case.record_type) }} {{ t('done.saved_at', when=case.created_at_utc) }}</p>
 </section>
 
 <section class="panel">
-  <h2>What we received</h2>
+  <h2>{{ t('done.received_h') }}</h2>
   {% if evidence %}
   <ul class="bullets">
-    {% for ev in evidence %}<li>{{ ev.kind|label('evidence_kind') }} — {{ ev.original_filename }} ({{ fmt_size(ev.size_bytes) }}) —
-      fingerprinted{% if ev.client_hash_match == 1 %}, arrived unchanged ✓{% elif ev.client_hash_match == 0 %}, <strong>did not match the phone's fingerprint</strong>{% endif %}</li>{% endfor %}
+    {% for ev in evidence %}<li>{{ t('done.item', kind=ev.kind|label('evidence_kind'), name=ev.original_filename, size=fmt_size(ev.size_bytes)) }}{% if ev.client_hash_match == 1 %}{{ t('done.item_match') }}{% elif ev.client_hash_match == 0 %}, <strong>{{ t('done.item_mismatch') }}</strong>{% endif %}</li>{% endfor %}
   </ul>
   {% else %}
-  <p>No files were attached. You can add photos later from the tracking page.</p>
+  <p>{{ t('done.no_files') }}</p>
   {% endif %}
 </section>
 
 <section class="panel">
-  <h2>What happens next</h2>
+  <h2>{{ t('done.next_h') }}</h2>
   <ol class="flow">
-    <li>A reviewer will check your report. This is an internal review by the Pramaana project team.</li>
-    <li>If more information is needed, the tracking page will say what.</li>
-    <li><strong>If your crop is insured, you must still inform your insurer yourself</strong> (for example
-      through the insurer's app, helpline or office). Pramaana does not do this for you.</li>
+    <li>{{ t('done.next1') }}</li>
+    <li>{{ t('done.next2') }}</li>
+    <li>{{ t('done.next3_html')|safe }}</li>
   </ol>
-  <div class="actions"><a class="btn btn-primary" href="{{ url_for('track_case', case_id=case.case_id) }}">Open tracking page</a>
-    <a class="btn btn-secondary" href="{{ url_for('report') }}">Report another field</a></div>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('track_case', case_id=case.case_id) }}">{{ t('done.open_tracking') }}</a>
+    <a class="btn btn-secondary" href="{{ url_for('report') }}">{{ t('done.another') }}</a></div>
 </section>
 {% endblock %}

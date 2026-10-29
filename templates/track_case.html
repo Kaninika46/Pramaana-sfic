@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% from "_macros.html" import status_badge, record_badge, deadline_panel with context %}
-{% block title %}Case {{ case.case_id }}{% endblock %}
+{% block title %}{{ t('case.title', case_id=case.case_id) }}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-{% if case.record_type == 'synthetic_demo' %}<div class="notice notice-synthetic">SYNTHETIC DEMONSTRATION — NOT REAL EVIDENCE</div>{% endif %}
+{% if case.record_type == 'synthetic_demo' %}<div class="notice notice-synthetic">{{ t('case.synthetic') }}</div>{% endif %}
 <section class="panel status-hero">
   <div class="panel-header">
-    <div><h1>Case <span class="case-id">{{ case.case_id }}</span></h1>{{ record_badge(case.record_type) }}</div>
+    <div><h1>{{ t('case.h1') }} <span class="case-id">{{ case.case_id }}</span></h1>{{ record_badge(case.record_type) }}</div>
     {{ status_badge(case.status) }}
   </div>
-  <p><strong>{{ farmer_status.en }}</strong>{% if farmer_status.bn %} <span class="bn">{{ farmer_status.bn }}</span>{% endif %}</p>
-  <p><strong>Next step:</strong> {{ farmer_status.next }}</p>
+  <p><strong>{{ farmer_status.text }}</strong></p>
+  <p><strong>{{ t('case.next_step') }}</strong> {{ farmer_status.next }}</p>
   {% if notes %}
     {% set last = notes[-1] %}
-    {% if last.note %}<div class="notice notice-info"><strong>Reviewer's note ({{ last.timestamp_utc }}):</strong> {{ last.note }}</div>{% endif %}
+    {% if last.note %}<div class="notice notice-info"><strong>{{ t('case.reviewer_note', when=last.timestamp_utc) }}</strong> {{ last.note }}</div>{% endif %}
   {% endif %}
 </section>
 
@@ -23,55 +23,53 @@
 </section>
 
 <section class="panel">
-  <h2>Files received ({{ evidence|selectattr('status', 'equalto', 'active')|list|length }})</h2>
   {% set active = evidence|selectattr('status', 'equalto', 'active')|list %}
+  <h2>{{ t('case.files_h', count=active|length) }}</h2>
   {% if active %}
   <ul class="bullets">
-    {% for ev in active %}<li>{{ ev.kind|label('evidence_kind') }} — {{ ev.original_filename }} — received {{ ev.uploaded_at_utc }}</li>{% endfor %}
+    {% for ev in active %}<li>{{ t('case.file_item', kind=ev.kind|label('evidence_kind'), name=ev.original_filename, when=ev.uploaded_at_utc) }}</li>{% endfor %}
   </ul>
-  {% else %}<div class="empty">No files yet.</div>{% endif %}
+  {% else %}<div class="empty">{{ t('case.no_files') }}</div>{% endif %}
 
   {% if case.status not in ('CLOSED',) %}
   <form method="post" action="{{ url_for('track_add_evidence', case_id=case.case_id) }}" enctype="multipart/form-data"
-        data-hash-files data-max-bytes="{{ 10 * 1024 * 1024 }}" data-busy-text="Uploading…" class="stack">
+        data-hash-files data-max-bytes="{{ 10 * 1024 * 1024 }}" data-busy-text="{{ t('case.uploading') }}" class="stack">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="client_hashes" value="">
-    <h3>Add more files</h3>
+    <h3>{{ t('case.add_h') }}</h3>
     <div class="form-group">
-      <label for="photos">Photos <span class="bn">(জমির ছবি)</span></label>
+      <label for="photos">{{ t('report.photos_label') }}</label>
       <input type="file" id="photos" name="photos" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" multiple>
       <ul class="file-list" id="photos-list"></ul>
     </div>
     <div class="form-group">
-      <label for="documents">Documents</label>
+      <label for="documents">{{ t('report.documents_label') }}</label>
       <input type="file" id="documents" name="documents" accept="application/pdf,image/jpeg,image/png" multiple>
       <ul class="file-list" id="documents-list"></ul>
     </div>
-    <button type="submit" class="btn btn-primary">Upload files</button>
+    <button type="submit" class="btn btn-primary">{{ t('case.upload') }}</button>
   </form>
   {% endif %}
 </section>
 
 {% if latest_doc %}
 <section class="panel">
-  <h2>Evidence file (dossier)</h2>
-  <p>Version {{ latest_doc.version }} prepared {{ latest_doc.generated_at_utc }}. It is a prepared document,
-    not a claim approval or an official certificate.</p>
-  <a class="btn btn-secondary" href="{{ url_for('track_download', case_id=case.case_id, doc_id=latest_doc.doc_id) }}">⬇ Download dossier (PDF)</a>
+  <h2>{{ t('case.dossier_h') }}</h2>
+  <p>{{ t('case.dossier_p', version=latest_doc.version, when=latest_doc.generated_at_utc) }}</p>
+  <a class="btn btn-secondary" href="{{ url_for('track_download', case_id=case.case_id, doc_id=latest_doc.doc_id) }}">{{ t('case.download') }}</a>
 </section>
 {% endif %}
 
 <section class="panel">
-  <h2>Delete my personal data</h2>
+  <h2>{{ t('case.erase_h') }}</h2>
   {% if case.erasure_requested_at_utc %}
-    <p>You asked for deletion on {{ case.erasure_requested_at_utc }}. An administrator will carry it out.</p>
+    <p>{{ t('case.erase_requested', when=case.erasure_requested_at_utc) }}</p>
   {% else %}
-  <p>Your name, phone number, land details, location, photos and documents will be deleted. A short
-    non-personal record (case ID, dates, file fingerprints and the audit log) will remain.</p>
+  <p>{{ t('case.erase_explain') }}</p>
   <form method="post" action="{{ url_for('track_erasure_request', case_id=case.case_id) }}"
-        data-confirm="Ask for your personal data to be deleted? This cannot be undone once carried out.">
+        data-confirm="{{ t('case.erase_confirm') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" class="btn btn-danger">Request deletion</button>
+    <button type="submit" class="btn btn-danger">{{ t('case.erase_button') }}</button>
   </form>
   {% endif %}
 </section>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,29 +8,41 @@
   <script src="{{ url_for('static', filename='pramaana.js') }}" defer></script>
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main">{{ t('skip') }}</a>
 <header class="site-header">
   <div class="header-inner">
     <a class="brand" href="{{ url_for('index') }}">
-      <div class="brand-title">PRAMAANA <span class="bn">(প্রমাণ)</span></div>
-      <div class="brand-sub">AI-assisted agricultural flood evidence &amp; claim-preparation system</div>
+      {% if lang == 'bn' %}
+      <div class="brand-title">প্রমাণ <span class="bn" lang="en">(PRAMAANA)</span></div>
+      {% else %}
+      <div class="brand-title">PRAMAANA <span class="bn" lang="bn">(প্রমাণ)</span></div>
+      {% endif %}
+      <div class="brand-sub">{{ t('brand.sub') }}</div>
     </a>
-    <nav class="nav" aria-label="Main">
+    <nav class="nav" aria-label="{{ t('nav.main') }}">
       {% set ep = request.endpoint or '' %}
-      <a href="{{ url_for('report') }}" {% if ep == 'report' %}aria-current="page"{% endif %}>Report a loss</a>
-      <a href="{{ url_for('track') }}" {% if ep.startswith('track') %}aria-current="page"{% endif %}>Track a case</a>
-      <a href="{{ url_for('verify_file') }}" {% if ep == 'verify_file' %}aria-current="page"{% endif %}>Verify a file</a>
-      <a href="{{ url_for('about') }}" {% if ep == 'about' %}aria-current="page"{% endif %}>About &amp; limits</a>
+      <a href="{{ url_for('report') }}" {% if ep == 'report' %}aria-current="page"{% endif %}>{{ t('nav.report') }}</a>
+      <a href="{{ url_for('track') }}" {% if ep.startswith('track') %}aria-current="page"{% endif %}>{{ t('nav.track') }}</a>
+      <a href="{{ url_for('verify_file') }}" {% if ep == 'verify_file' %}aria-current="page"{% endif %}>{{ t('nav.verify') }}</a>
+      <a href="{{ url_for('about') }}" {% if ep == 'about' %}aria-current="page"{% endif %}>{{ t('nav.about') }}</a>
       {% if reviewer %}
-        <a href="{{ url_for('reviewer_dashboard') }}" {% if ep.startswith('reviewer') %}aria-current="page"{% endif %}>Reviewer</a>
+        <a href="{{ url_for('reviewer_dashboard') }}" {% if ep.startswith('reviewer') %}aria-current="page"{% endif %}>{{ t('nav.reviewer') }}</a>
         <form method="post" action="{{ url_for('reviewer_logout') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit">Sign out ({{ reviewer.username }})</button>
+          <button type="submit">{{ t('nav.sign_out', user=reviewer.username) }}</button>
         </form>
       {% else %}
-        <a href="{{ url_for('reviewer_login') }}" {% if ep == 'reviewer_login' %}aria-current="page"{% endif %}>Reviewer sign-in</a>
+        <a href="{{ url_for('reviewer_login') }}" {% if ep == 'reviewer_login' %}aria-current="page"{% endif %}>{{ t('nav.reviewer_signin') }}</a>
       {% endif %}
     </nav>
+    {% if farmer_page %}
+    <nav class="lang-switch" aria-label="{{ t('lang.label') }}">
+      {% for code, name in lang_names.items() %}
+        <a href="{{ url_for('set_language', code=code, next=request.path) }}" lang="{{ code }}" hreflang="{{ code }}"
+           {% if code == lang %}aria-current="true"{% endif %}>{{ name }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
   </div>
 </header>
 <main id="main" class="{% block main_class %}{% endblock %}">
@@ -42,8 +54,8 @@
   {% block content %}{% endblock %}
 </main>
 <footer class="site-footer">
-  Pramaana v{{ app_version }} — a student public-interest technology prototype. Not a government, insurer, court
-  or legal-aid service. It does not file claims or make decisions. <a href="{{ url_for('about') }}">Limitations</a>
+  {{ t('footer', version=app_version) }} <a href="{{ url_for('about') }}">{{ t('footer.limits') }}</a>
 </footer>
+<script type="application/json" id="i18n-data">{{ js_i18n|tojson }}</script>
 </body>
 </html>
