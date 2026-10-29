@@ -1,19 +1,20 @@
 {% extends "base.html" %}
 {% from "_macros.html" import status_badge, record_badge, deadline_panel with context %}
+{% block title_i18n %}data-i18n-title="{{ i18n_json(tx('case.title', case_id=case.case_id)) }}"{% endblock %}
 {% block title %}{{ t('case.title', case_id=case.case_id) }}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-{% if case.record_type == 'synthetic_demo' %}<div class="notice notice-synthetic">{{ t('case.synthetic') }}</div>{% endif %}
+{% if case.record_type == 'synthetic_demo' %}<div class="notice notice-synthetic">{{ tb('case.synthetic') }}</div>{% endif %}
 <section class="panel status-hero">
   <div class="panel-header">
-    <div><h1>{{ t('case.h1') }} <span class="case-id">{{ case.case_id }}</span></h1>{{ record_badge(case.record_type) }}</div>
+    <div><h1>{{ tb('case.h1') }} <span class="case-id">{{ case.case_id }}</span></h1>{{ record_badge(case.record_type) }}</div>
     {{ status_badge(case.status) }}
   </div>
-  <p><strong>{{ farmer_status.text }}</strong></p>
-  <p><strong>{{ t('case.next_step') }}</strong> {{ farmer_status.next }}</p>
+  <p><strong>{{ farmer_status.text|bi }}</strong></p>
+  <p><strong>{{ tb('case.next_step') }}</strong> {{ farmer_status.next|bi }}</p>
   {% if notes %}
     {% set last = notes[-1] %}
-    {% if last.note %}<div class="notice notice-info"><strong>{{ t('case.reviewer_note', when=last.timestamp_utc) }}</strong> {{ last.note }}</div>{% endif %}
+    {% if last.note %}<div class="notice notice-info"><strong>{{ tb('case.reviewer_note', when=last.timestamp_utc) }}</strong> {{ last.note }}</div>{% endif %}
   {% endif %}
 </section>
 
@@ -24,52 +25,52 @@
 
 <section class="panel">
   {% set active = evidence|selectattr('status', 'equalto', 'active')|list %}
-  <h2>{{ t('case.files_h', count=active|length) }}</h2>
+  <h2>{{ tb('case.files_h', count=active|length) }}</h2>
   {% if active %}
   <ul class="bullets">
-    {% for ev in active %}<li>{{ t('case.file_item', kind=ev.kind|label('evidence_kind'), name=ev.original_filename, when=ev.uploaded_at_utc) }}</li>{% endfor %}
+    {% for ev in active %}<li>{{ tb('case.file_item', kind=tlp('evidence_kind', ev.kind), name=ev.original_filename, when=ev.uploaded_at_utc) }}</li>{% endfor %}
   </ul>
-  {% else %}<div class="empty">{{ t('case.no_files') }}</div>{% endif %}
+  {% else %}<div class="empty">{{ tb('case.no_files') }}</div>{% endif %}
 
   {% if case.status not in ('CLOSED',) %}
   <form method="post" action="{{ url_for('track_add_evidence', case_id=case.case_id) }}" enctype="multipart/form-data"
-        data-hash-files data-max-bytes="{{ 10 * 1024 * 1024 }}" data-busy-text="{{ t('case.uploading') }}" class="stack">
+        data-hash-files data-max-bytes="{{ 10 * 1024 * 1024 }}" {{ ta({'data-busy-text': tx('case.uploading')}) }} class="stack">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="client_hashes" value="">
-    <h3>{{ t('case.add_h') }}</h3>
+    <h3>{{ tb('case.add_h') }}</h3>
     <div class="form-group">
-      <label for="photos">{{ t('report.photos_label') }}</label>
+      <label for="photos">{{ tb('report.photos_label') }}</label>
       <input type="file" id="photos" name="photos" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" multiple>
       <ul class="file-list" id="photos-list"></ul>
     </div>
     <div class="form-group">
-      <label for="documents">{{ t('report.documents_label') }}</label>
+      <label for="documents">{{ tb('report.documents_label') }}</label>
       <input type="file" id="documents" name="documents" accept="application/pdf,image/jpeg,image/png" multiple>
       <ul class="file-list" id="documents-list"></ul>
     </div>
-    <button type="submit" class="btn btn-primary">{{ t('case.upload') }}</button>
+    <button type="submit" class="btn btn-primary">{{ tb('case.upload') }}</button>
   </form>
   {% endif %}
 </section>
 
 {% if latest_doc %}
 <section class="panel">
-  <h2>{{ t('case.dossier_h') }}</h2>
-  <p>{{ t('case.dossier_p', version=latest_doc.version, when=latest_doc.generated_at_utc) }}</p>
-  <a class="btn btn-secondary" href="{{ url_for('track_download', case_id=case.case_id, doc_id=latest_doc.doc_id) }}">{{ t('case.download') }}</a>
+  <h2>{{ tb('case.dossier_h') }}</h2>
+  <p>{{ tb('case.dossier_p', version=latest_doc.version, when=latest_doc.generated_at_utc) }}</p>
+  <a class="btn btn-secondary" href="{{ url_for('track_download', case_id=case.case_id, doc_id=latest_doc.doc_id) }}">{{ tb('case.download') }}</a>
 </section>
 {% endif %}
 
 <section class="panel">
-  <h2>{{ t('case.erase_h') }}</h2>
+  <h2>{{ tb('case.erase_h') }}</h2>
   {% if case.erasure_requested_at_utc %}
-    <p>{{ t('case.erase_requested', when=case.erasure_requested_at_utc) }}</p>
+    <p>{{ tb('case.erase_requested', when=case.erasure_requested_at_utc) }}</p>
   {% else %}
-  <p>{{ t('case.erase_explain') }}</p>
+  <p>{{ tb('case.erase_explain') }}</p>
   <form method="post" action="{{ url_for('track_erasure_request', case_id=case.case_id) }}"
-        data-confirm="{{ t('case.erase_confirm') }}">
+        {{ ta({'data-confirm': tx('case.erase_confirm')}) }}>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" class="btn btn-danger">{{ t('case.erase_button') }}</button>
+    <button type="submit" class="btn btn-danger">{{ tb('case.erase_button') }}</button>
   </form>
   {% endif %}
 </section>

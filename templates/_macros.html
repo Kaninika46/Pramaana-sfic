@@ -1,21 +1,23 @@
+{# Text on farmer pages is bilingual: tb()/|bi render an element that pramaana.js can
+   switch between English and Bengali in place; ta() does the same for attributes. #}
 {% macro label_for(name, required=False) -%}
-  <label for="{{ name }}">{{ fl(name) }}
-    {% if required %}<span class="req" aria-hidden="true">*</span>{% else %}<span class="opt">{{ t('optional') }}</span>{% endif %}</label>
+  <label for="{{ name }}">{{ fl(name)|bi }}
+    {% if required %}<span class="req" aria-hidden="true">*</span>{% else %}<span class="opt">{{ tb('optional') }}</span>{% endif %}</label>
 {%- endmacro %}
 
 {% macro error_for(name, errors) -%}
-  {% if errors.get(name) %}<div class="field-error" id="{{ name }}-error">{{ errors[name] }}</div>{% endif %}
+  {% if errors.get(name) %}<div class="field-error" id="{{ name }}-error">{{ errors[name]|bi }}</div>{% endif %}
 {%- endmacro %}
 
-{% macro input(name, values, errors, type="text", required=False, hint=None, attrs="") -%}
+{% macro input(name, values, errors, type="text", required=False, hint=None, attrs="", i18n=None) -%}
 <div class="form-group{% if errors.get(name) %} has-error{% endif %}">
   {{ label_for(name, required) }}
   <input type="{{ type }}" id="{{ name }}" name="{{ name }}" value="{{ values.get(name, '') }}"
-         data-summary-label="{{ fl(name) }}"
+         {{ ta({'data-summary-label': fl(name)}, i18n) }}
          {% if required %}required aria-required="true"{% endif %}
          {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% elif hint %}aria-describedby="{{ name }}-hint"{% endif %}
          {{ attrs|safe }}>
-  {% if hint %}<div class="hint" id="{{ name }}-hint">{{ hint }}</div>{% endif %}
+  {% if hint %}<div class="hint" id="{{ name }}-hint">{{ hint|bi }}</div>{% endif %}
   {{ error_for(name, errors) }}
 </div>
 {%- endmacro %}
@@ -24,13 +26,17 @@
 <div class="form-group{% if errors.get(name) %} has-error{% endif %}">
   {{ label_for(name, required) }}
   {% set cur = values.get(name, default) %}
-  <select id="{{ name }}" name="{{ name }}" data-summary-label="{{ fl(name) }}" {% if required %}required{% endif %}
+  <select id="{{ name }}" name="{{ name }}" {{ ta({'data-summary-label': fl(name)}) }} {% if required %}required{% endif %}
           {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>
     {% for key, text in options.items() %}
-      <option value="{{ key }}" {% if key == cur %}selected{% endif %}>{{ key|label(group) if group else text }}</option>
+      {% if group %}{% set opt = tl(group, key) %}
+      <option value="{{ key }}" data-i18n="{{ i18n_json(opt) }}" {% if key == cur %}selected{% endif %}>{{ opt }}</option>
+      {% else %}
+      <option value="{{ key }}" {% if key == cur %}selected{% endif %}>{{ text }}</option>
+      {% endif %}
     {% endfor %}
   </select>
-  {% if hint %}<div class="hint">{{ hint }}</div>{% endif %}
+  {% if hint %}<div class="hint">{{ hint|bi }}</div>{% endif %}
   {{ error_for(name, errors) }}
 </div>
 {%- endmacro %}
@@ -39,13 +45,13 @@
   {%- set cls = {'SUBMITTED':'badge-blue','UNDER_REVIEW':'badge-blue','INFO_REQUESTED':'badge-amber',
                  'READY_FOR_SUBMISSION':'badge-green','REFERRED_FOR_LEGAL_AID':'badge-amber',
                  'CLOSED':'badge-grey','ERASED':'badge-grey'}.get(status, 'badge-grey') -%}
-  <span class="badge {{ cls }}">{{ status|label('status') }}</span>
+  <span class="badge {{ cls }}">{{ tl('status', status)|bi }}</span>
 {%- endmacro %}
 
 {% macro record_badge(rt) -%}
-  {% if rt == 'synthetic_demo' %}<span class="badge badge-red">{{ t('badge.synthetic') }}</span>
-  {% elif rt == 'field_test' %}<span class="badge badge-amber">{{ t('badge.field_test') }}</span>
-  {% else %}<span class="badge badge-grey">{{ t('badge.real') }}</span>{% endif %}
+  {% if rt == 'synthetic_demo' %}<span class="badge badge-red">{{ tb('badge.synthetic') }}</span>
+  {% elif rt == 'field_test' %}<span class="badge badge-amber">{{ tb('badge.field_test') }}</span>
+  {% else %}<span class="badge badge-grey">{{ tb('badge.real') }}</span>{% endif %}
 {%- endmacro %}
 
 {% macro verify_badge(result) -%}
@@ -64,30 +70,30 @@
 {% macro deadline_panel(deadline, server_now_ms) -%}
 <div class="deadline-box {% if deadline.state == 'passed' %}passed{% elif deadline.state != 'open' %}neutral{% endif %}">
   <div class="actions actions-between">
-    <strong>{{ t('dl.heading') }}</strong>
-    {% if deadline.is_simulated %}<span class="badge badge-red">{{ t('dl.simulated') }}</span>
-    {% elif deadline.verified %}<span class="badge badge-green">{{ t('dl.verified') }}</span>
-    {% else %}<span class="badge badge-amber">{{ t('dl.provisional') }}</span>{% endif %}
+    <strong>{{ tb('dl.heading') }}</strong>
+    {% if deadline.is_simulated %}<span class="badge badge-red">{{ tb('dl.simulated') }}</span>
+    {% elif deadline.verified %}<span class="badge badge-green">{{ tb('dl.verified') }}</span>
+    {% else %}<span class="badge badge-amber">{{ tb('dl.provisional') }}</span>{% endif %}
   </div>
   {% if deadline.state == 'open' %}
     <div class="countdown" data-deadline-ms="{{ deadline.deadline_epoch_ms }}" data-server-now-ms="{{ server_now_ms }}"
-         data-prefix="{{ t('dl.prefix_simulated') if deadline.is_simulated else t('dl.prefix') }}" aria-live="off">
-      {{ t('dl.due', when=deadline.deadline_ist) }}</div>
+         {{ ta({'data-prefix': tx('dl.prefix_simulated') if deadline.is_simulated else tx('dl.prefix')}) }} aria-live="off">
+      {{ tb('dl.due', when=deadline.deadline_ist) }}</div>
   {% elif deadline.state == 'passed' %}
-    <div class="countdown">{{ t('dl.ended', when=deadline.deadline_ist) }}</div>
+    <div class="countdown">{{ tb('dl.ended', when=deadline.deadline_ist) }}</div>
   {% endif %}
-  <p class="small">{{ deadline.message }}</p>
-  <details class="more"><summary>{{ t('dl.how') }}</summary>
-    {% if t('dl.english_rules') %}<p class="small muted">{{ t('dl.english_rules') }}</p>{% endif %}
+  <p class="small">{{ deadline.message|bi }}</p>
+  <details class="more"><summary>{{ tb('dl.how') }}</summary>
+    <p class="small muted" data-lang-only="bn" {% if lang != 'bn' %}hidden{% endif %}>{{ tb('dl.english_rules') }}</p>
     <dl class="kv small">
-      <dt>{{ t('dl.scheme') }}</dt><dd>{{ deadline.scheme_label }}</dd>
-      <dt>{{ t('dl.incident_start') }}</dt><dd>{{ deadline.incident_start_utc or '—' }}{% if deadline.incident_time_assumed %} <span class="muted">{{ t('dl.time_assumed') }}</span>{% endif %}</dd>
-      <dt>{{ t('dl.duration') }}</dt><dd>{{ t('dl.hours', hours=deadline.duration_hours) if deadline.duration_hours else t('dl.none_configured') }}</dd>
-      <dt>{{ t('dl.source') }}</dt><dd>{{ deadline.source or '—' }}</dd>
-      <dt>{{ t('dl.applicability') }}</dt><dd>{{ deadline.applicability_note }}</dd>
-      <dt>{{ t('dl.recorded') }}</dt><dd>{{ deadline.case_recorded_utc }}</dd>
+      <dt>{{ tb('dl.scheme') }}</dt><dd>{{ deadline.scheme_label }}</dd>
+      <dt>{{ tb('dl.incident_start') }}</dt><dd>{{ deadline.incident_start_utc or '—' }}{% if deadline.incident_time_assumed %} <span class="muted">{{ tb('dl.time_assumed') }}</span>{% endif %}</dd>
+      <dt>{{ tb('dl.duration') }}</dt><dd>{{ tb('dl.hours', hours=deadline.duration_hours) if deadline.duration_hours else tb('dl.none_configured') }}</dd>
+      <dt>{{ tb('dl.source') }}</dt><dd>{{ deadline.source or '—' }}</dd>
+      <dt>{{ tb('dl.applicability') }}</dt><dd>{{ deadline.applicability_note }}</dd>
+      <dt>{{ tb('dl.recorded') }}</dt><dd>{{ deadline.case_recorded_utc }}</dd>
     </dl>
-    <p class="small muted">{{ t('dl.no_filing') }}</p>
+    <p class="small muted">{{ tb('dl.no_filing') }}</p>
   </details>
 </div>
 {%- endmacro %}

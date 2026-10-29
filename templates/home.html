@@ -1,54 +1,55 @@
 {% extends "base.html" %}
+{% block title_i18n %}data-i18n-title="{{ i18n_json(tx('home.title')) }}"{% endblock %}
 {% block title %}{{ t('home.title') }}{% endblock %}
 {% block content %}
 <section class="hero">
-  <h1>{{ t('home.h1') }}</h1>
-  <p>{{ t('home.intro') }}</p>
+  <h1>{{ tb('home.h1') }}</h1>
+  <p>{{ tb('home.intro') }}</p>
 </section>
 
 <div class="notice notice-warn">
-  {{ t('home.important_html')|safe }}
+  {{ tb('home.important_html') }}
 </div>
 
 <div class="grid grid-3">
   <a class="choice-card" href="{{ url_for('report') }}">
-    <h2>{{ t('home.card_report_h') }}</h2>
-    <p>{{ t('home.card_report_p') }}</p>
+    <h2>{{ tb('home.card_report_h') }}</h2>
+    <p>{{ tb('home.card_report_p') }}</p>
   </a>
   <a class="choice-card" href="{{ url_for('track') }}">
-    <h2>{{ t('home.card_track_h') }}</h2>
-    <p>{{ t('home.card_track_p') }}</p>
+    <h2>{{ tb('home.card_track_h') }}</h2>
+    <p>{{ tb('home.card_track_p') }}</p>
   </a>
   <a class="choice-card" href="{{ url_for('verify_file') }}">
-    <h2>{{ t('home.card_verify_h') }}</h2>
-    <p>{{ t('home.card_verify_p') }}</p>
+    <h2>{{ tb('home.card_verify_h') }}</h2>
+    <p>{{ tb('home.card_verify_p') }}</p>
   </a>
 </div>
 
 <div class="grid grid-2">
   <section class="panel">
-    <h2>{{ t('home.flow_h') }}</h2>
+    <h2>{{ tb('home.flow_h') }}</h2>
     <ol class="flow">
-      <li>{{ t('home.flow1') }}</li>
-      <li>{{ t('home.flow2') }}</li>
-      <li>{{ t('home.flow3') }}</li>
-      <li>{{ t('home.flow4') }}</li>
-      <li>{{ t('home.flow5') }}</li>
-      <li>{{ t('home.flow6') }}</li>
+      <li>{{ tb('home.flow1') }}</li>
+      <li>{{ tb('home.flow2') }}</li>
+      <li>{{ tb('home.flow3') }}</li>
+      <li>{{ tb('home.flow4') }}</li>
+      <li>{{ tb('home.flow5') }}</li>
+      <li>{{ tb('home.flow6') }}</li>
     </ol>
   </section>
   <section class="panel">
-    <h2>{{ t('home.status_h') }}</h2>
+    <h2>{{ tb('home.status_h') }}</h2>
     <dl class="kv">
-      <dt>{{ t('home.storage') }}</dt><dd><span class="badge badge-green">{{ t('home.storage_ok') }}</span></dd>
-      <dt>{{ t('home.satellite') }}</dt>
-      <dd>{% if ee_state.ready %}<span class="badge badge-green">{{ t('home.ee_ok') }}</span>
-          {% else %}<span class="badge badge-amber">{{ t('home.ee_off') }}</span>
+      <dt>{{ tb('home.storage') }}</dt><dd><span class="badge badge-green">{{ tb('home.storage_ok') }}</span></dd>
+      <dt>{{ tb('home.satellite') }}</dt>
+      <dd>{% if ee_state.ready %}<span class="badge badge-green">{{ tb('home.ee_ok') }}</span>
+          {% else %}<span class="badge badge-amber">{{ tb('home.ee_off') }}</span>
           <div class="small muted" lang="en">{{ ee_state.message }}</div>{% endif %}</dd>
-      <dt>{{ t('home.integrations') }}</dt>
-      <dd>{{ t('home.integrations_html')|safe }}</dd>
-      <dt>{{ t('home.field_validation') }}</dt>
-      <dd>{{ t('home.field_validation_html', url=url_for('about') ~ '#field-testing')|safe }}</dd>
+      <dt>{{ tb('home.integrations') }}</dt>
+      <dd>{{ tb('home.integrations_html') }}</dd>
+      <dt>{{ tb('home.field_validation') }}</dt>
+      <dd>{{ tb('home.field_validation_html', url=url_for('about') ~ '#field-testing') }}</dd>
     </dl>
   </section>
 </div>

@@ -12,11 +12,52 @@
     try { return JSON.parse(document.getElementById("i18n-data").textContent) || {}; }
     catch (e) { return {}; }
   })();
+  function lang() { return document.documentElement.lang === "bn" ? "bn" : "en"; }
   function T(key, fallback, params) {
-    let text = I18N[key] || fallback;
+    let text = (I18N[lang()] || {})[key] || fallback;
     Object.keys(params || {}).forEach(function (k) { text = text.split("{" + k + "}").join(String(params[k])); });
     return text;
   }
+  // Messages written by this script remember their key, so a language switch can rewrite them.
+  function say(el, key, fallback, params) {
+    if (!el) return;
+    el._i18n = [key, fallback, params];
+    el.textContent = T(key, fallback, params);
+  }
+
+  // ---------------------------------------------------------------- language switch
+  // Swaps every bilingual element in place: typed values, chosen files and the
+  // current form step are untouched. The cookie makes the next page load in it too.
+  function parse(s) { try { return JSON.parse(s); } catch (e) { return null; } }
+  function applyLang(code) {
+    document.documentElement.lang = code;
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      const d = parse(el.dataset.i18n); if (d) el.textContent = d[code] || d.en; });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
+      const d = parse(el.dataset.i18nHtml); if (d) el.innerHTML = d[code] || d.en; });  // our own fixed markup only
+    document.querySelectorAll("[data-i18n-attrs]").forEach(function (el) {
+      const d = parse(el.dataset.i18nAttrs) || {};
+      Object.keys(d).forEach(function (a) { el.setAttribute(a, d[a][code] || d[a].en); });
+    });
+    document.querySelectorAll("[data-lang-only]").forEach(function (el) { el.hidden = el.dataset.langOnly !== code; });
+    const title = document.querySelector("title[data-i18n-title]");
+    if (title) { const d = parse(title.dataset.i18nTitle); if (d) document.title = (d[code] || d.en) + title.dataset.titleSuffix; }
+    document.querySelectorAll("[data-set-lang]").forEach(function (a) {
+      if (a.dataset.setLang === code) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
+    document.querySelectorAll("*").forEach(function (el) { if (el._i18n) el.textContent = T.apply(null, el._i18n); });
+    document.dispatchEvent(new CustomEvent("pramaana:langchange", { detail: { lang: code } }));
+  }
+  document.querySelectorAll("[data-set-lang]").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      const code = a.dataset.setLang, nav = a.closest("[data-lang-cookie]");
+      const cookieName = nav ? nav.dataset.langCookie : "pramaana_lang";
+      document.cookie = cookieName + "=" + code +
+        "; path=/; max-age=31536000; samesite=lax" + (location.protocol === "https:" ? "; secure" : "");
+      try { window.localStorage.setItem(cookieName, code); } catch (err) { }
+      applyLang(code);
+    });
+  });
 
   // ---------------------------------------------------------------- SHA-256
   // Pure-JS fallback for phones on plain-HTTP LAN addresses, where
@@ -90,15 +131,15 @@
         for (const file of input.files) {
           const li = document.createElement("li");
           if (maxBytes && file.size > maxBytes) {
-            li.textContent = T("file_too_large", "{name} — too large ({size}), it will be rejected",
+            say(li, "file_too_large", "{name} — too large ({size}), it will be rejected",
               { name: file.name, size: formatSize(file.size) });
             li.className = "field-error";
           } else {
-            li.textContent = T("file_hashing", "{name} ({size}) — fingerprinting…",
+            say(li, "file_hashing", "{name} ({size}) — fingerprinting…",
               { name: file.name, size: formatSize(file.size) });
             const hex = await sha256File(file);
             all.push({ name: file.name, size: file.size, sha256: hex });
-            li.textContent = T("file_hashed", "{name} ({size}) — SHA-256 {hash}…",
+            say(li, "file_hashed", "{name} ({size}) — SHA-256 {hash}…",
               { name: file.name, size: formatSize(file.size), hash: hex.slice(0, 16) });
           }
           if (list) list.appendChild(li);
@@ -119,10 +160,10 @@
     btn.hidden = false;
     btn.addEventListener("click", function () {
       if (!navigator.geolocation) {
-        status.textContent = T("gps_unsupported", "This phone or browser cannot share its location. Type the numbers instead.");
+        say(status, "gps_unsupported", "This phone or browser cannot share its location. Type the numbers instead.");
         return;
       }
-      status.textContent = T("gps_finding", "Finding location… stand in or next to the field.");
+      say(status, "gps_finding", "Finding location… stand in or next to the field.");
       btn.setAttribute("aria-busy", "true");
       navigator.geolocation.getCurrentPosition(function (pos) {
         lat.value = pos.coords.latitude.toFixed(6);
@@ -130,15 +171,59 @@
         acc.value = Math.round(pos.coords.accuracy);
         src.value = "device_gps";
         btn.removeAttribute("aria-busy");
-        status.textContent = T("gps_recorded", "Location recorded from the phone (accuracy about ±{m} m). " +
+        say(status, "gps_recorded", "Location recorded from the phone (accuracy about ±{m} m). " +
           "Check it is the affected field, not your home.", { m: Math.round(pos.coords.accuracy) });
       }, function (err) {
         btn.removeAttribute("aria-busy");
-        status.textContent = T("gps_failed", "Could not get location ({err}). You can type it, or leave it empty.",
+        say(status, "gps_failed", "Could not get location ({err}). You can type it, or leave it empty.",
           { err: err.message });
       }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
     });
     [lat, lon].forEach(el => el.addEventListener("input", function () { src.value = "manual"; acc.value = ""; }));
+  });
+
+  // ---------------------------------------------------------------- drafts
+  // Text fields and active step (never files or consent), saved immediately on
+  // this device so a reload, language link or closed tab never loses work.
+  document.querySelectorAll("form[data-draft-key]").forEach(function (form) {
+    const key = "pramaana-draft:" + form.dataset.draftKey;
+    const note = document.getElementById("draft-status");
+    const fields = Array.from(form.elements).filter(el =>
+      el.name && !["file", "hidden", "checkbox", "password", "submit"].includes(el.type));
+    let store = null;
+    try { store = window.localStorage; } catch (e) { store = null; }
+    if (!store) return;
+    const hasServerValues = form.dataset.hasValues === "1";
+    try {
+      const saved = JSON.parse(store.getItem(key) || "null");
+      if (saved && !hasServerValues) {
+        fields.forEach(el => {
+          if (!(el.name in saved)) return;
+          if (el.type === "radio") el.checked = saved[el.name] === el.value;
+          else el.value = saved[el.name];
+        });
+        if (typeof saved._step === "number") form.dataset.restoredStep = String(saved._step);
+        say(note, "draft_restored", "Restored a draft saved on this device. Photos must be chosen again.");
+      }
+    } catch (e) { /* ignore corrupt drafts */ }
+    function saveNow(announce) {
+      const data = { _step: parseInt(form.dataset.currentStep || "0", 10) || 0 };
+      fields.forEach(el => { if (el.type !== "radio" || el.checked) data[el.name] = el.value; });
+      try {
+        store.setItem(key, JSON.stringify(data));
+        if (announce) say(note, "draft_saved", "Draft saved on this device.");
+      } catch (e) { }
+    }
+    form.addEventListener("input", function () { saveNow(true); });
+    form.addEventListener("change", function () { saveNow(true); });
+    form._saveDraft = saveNow;
+    const clear = document.getElementById("draft-clear");
+    if (clear) clear.addEventListener("click", function () {
+      try { store.removeItem(key); } catch (e) { }
+      form.reset();
+      say(note, "draft_cleared", "Draft cleared.");
+    });
+    form.addEventListener("submit", function () { try { store.removeItem(key); } catch (e) { } });
   });
 
   // ---------------------------------------------------------------- stepper
@@ -146,10 +231,14 @@
     const steps = Array.from(form.querySelectorAll(".step"));
     const marks = Array.from(document.querySelectorAll(".stepper li"));
     const firstError = form.querySelector(".has-error");
-    let current = firstError ? Math.max(0, steps.indexOf(firstError.closest(".step"))) : 0;
+    const restored = parseInt(form.dataset.restoredStep || "0", 10);
+    let current = firstError
+      ? Math.max(0, steps.indexOf(firstError.closest(".step")))
+      : Math.min(Math.max(0, restored || 0), steps.length - 1);
 
     function show(idx, moveFocus) {
       current = idx;
+      form.dataset.currentStep = String(idx);
       steps.forEach((s, i) => { s.hidden = i !== idx; });
       marks.forEach((m, i) => {
         m.className = i < idx ? "done" : (i === idx ? "current" : "");
@@ -158,6 +247,7 @@
       if (steps[idx].dataset.summary !== undefined) buildSummary();
       const heading = steps[idx].querySelector("legend");
       if (heading && moveFocus) { heading.setAttribute("tabindex", "-1"); heading.focus(); }
+      if (moveFocus && typeof form._saveDraft === "function") form._saveDraft(false);
     }
     function valid(step) {
       const fields = Array.from(step.querySelectorAll("input, select, textarea"));
@@ -176,7 +266,12 @@
         let value = "";
         if (f.type === "file") value = Array.from(f.files).map(x => x.name).join(", ");
         else if (f.tagName === "SELECT") value = f.options[f.selectedIndex] ? f.options[f.selectedIndex].text : "";
-        else if (f.type === "radio") { if (!f.checked) return; value = f.closest("label").textContent.trim(); }
+        else if (f.type === "radio") {
+          if (!f.checked) return;
+          // Radio cards hold a title and a hint; summarise the title only.
+          const label = f.closest("label");
+          value = (label.querySelector("strong") || label).textContent.trim();
+        }
         else value = f.value;
         const dt = document.createElement("dt"); dt.textContent = f.dataset.summaryLabel;
         const dd = document.createElement("dd"); dd.textContent = value || "—";
@@ -193,47 +288,9 @@
       else show(parseInt(t.dataset.stepGoto, 10), true);
     });
     show(current, Boolean(firstError));
-  });
-
-  // ---------------------------------------------------------------- drafts
-  // Text fields only (never files or consent), saved on this device so a lost
-  // connection or closed tab does not lose the work.
-  document.querySelectorAll("form[data-draft-key]").forEach(function (form) {
-    const key = "pramaana-draft:" + form.dataset.draftKey;
-    const note = document.getElementById("draft-status");
-    const fields = Array.from(form.elements).filter(el =>
-      el.name && !["file", "hidden", "checkbox", "password", "submit"].includes(el.type));
-    let store = null;
-    try { store = window.localStorage; } catch (e) { store = null; }
-    if (!store) return;
-    const hasServerValues = form.dataset.hasValues === "1";
-    try {
-      const saved = JSON.parse(store.getItem(key) || "null");
-      if (saved && !hasServerValues) {
-        fields.forEach(el => {
-          if (!(el.name in saved)) return;
-          if (el.type === "radio") el.checked = saved[el.name] === el.value;
-          else el.value = saved[el.name];
-        });
-        if (note) note.textContent = T("draft_restored", "Restored a draft saved on this device. Photos must be chosen again.");
-      }
-    } catch (e) { /* ignore corrupt drafts */ }
-    let timer = null;
-    form.addEventListener("input", function () {
-      clearTimeout(timer);
-      timer = setTimeout(function () {
-        const data = {};
-        fields.forEach(el => { if (el.type !== "radio" || el.checked) data[el.name] = el.value; });
-        try { store.setItem(key, JSON.stringify(data)); if (note) note.textContent = T("draft_saved", "Draft saved on this device."); } catch (e) { }
-      }, 600);
+    document.addEventListener("pramaana:langchange", function () {
+      if (steps[current].dataset.summary !== undefined) buildSummary();
     });
-    const clear = document.getElementById("draft-clear");
-    if (clear) clear.addEventListener("click", function () {
-      try { store.removeItem(key); } catch (e) { }
-      form.reset();
-      if (note) note.textContent = T("draft_cleared", "Draft cleared.");
-    });
-    form.addEventListener("submit", function () { try { store.removeItem(key); } catch (e) { } });
   });
 
   // ---------------------------------------------------------------- countdowns
@@ -242,8 +299,8 @@
   document.querySelectorAll("[data-deadline-ms]").forEach(function (el) {
     const deadline = parseInt(el.dataset.deadlineMs, 10);
     const offset = parseInt(el.dataset.serverNowMs, 10) - Date.now();
-    const prefix = el.dataset.prefix || "";
     function tick() {
+      const prefix = el.dataset.prefix || "";  // re-read: the language switch updates it
       const left = Math.floor((deadline - (Date.now() + offset)) / 1000);
       if (left <= 0) { el.textContent = prefix + T("window_ended", "window ended"); return; }
       const h = Math.floor(left / 3600), m = Math.floor((left % 3600) / 60), s = left % 60;

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html as html_lib
 import json
 import re
 import string
@@ -68,13 +69,20 @@ class SwitchTests(Base):
     def bengali(self, client=None):
         (client or self.farmer).get("/lang/bn?next=/")
 
+    @staticmethod
+    def visible(html: str) -> str:
+        """Visible text only: drops scripts, hidden alternate-language blocks, and tag attributes."""
+        body = re.sub(r"<script\b[^>]*>.*?</script>", "", html, flags=re.S)
+        body = re.sub(r"<(div|p)\b[^>]*\bdata-lang-only=\"[^\"]+\"[^>]*\bhidden\b[^>]*>.*?</\1>", "", body, flags=re.S)
+        return re.sub(r"<[^>]+>", "", body)
+
     def test_switch_sets_cookie_and_redirects_only_within_site(self):
         resp = self.farmer.get("/lang/bn?next=/report")
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(resp.location.endswith("/report"))
         cookie = resp.headers["Set-Cookie"]
         self.assertIn("pramaana_lang=bn", cookie)
-        self.assertIn("HttpOnly", cookie)
+        self.assertNotIn("HttpOnly", cookie)  # readable/writable by pramaana.js for in-place switching
         self.assertIn("SameSite=Lax", cookie)
         for bad in ("//evil.example", "https://evil.example", "/\\evil.example", ""):
             resp = self.farmer.get("/lang/en", query_string={"next": bad})
@@ -84,12 +92,16 @@ class SwitchTests(Base):
     def test_default_is_english_and_bengali_changes_the_page(self):
         html = self.farmer.get("/").get_data(as_text=True)
         self.assertIn('<html lang="en">', html)
-        self.assertIn("Organise evidence of flood damage to your crop", html)
+        self.assertIn("Organise evidence of flood damage to your crop", self.visible(html))
+        self.assertNotIn("বন্যায় ফসলের ক্ষতির প্রমাণ গুছিয়ে রাখুন", self.visible(html))
+        self.assertIn('data-lang-only="bn" hidden', html)
         self.bengali()
         html = self.farmer.get("/").get_data(as_text=True)
         self.assertIn('<html lang="bn">', html)
-        self.assertIn("বন্যায় ফসলের ক্ষতির প্রমাণ গুছিয়ে রাখুন", html)
-        self.assertNotIn("Organise evidence of flood damage", html)
+        self.assertIn("বন্যায় ফসলের ক্ষতির প্রমাণ গুছিয়ে রাখুন", self.visible(html))
+        self.assertNotIn("Organise evidence of flood damage", self.visible(html))
+        self.assertIn("Organise evidence of flood damage to your crop", html)  # kept in data-i18n for in-place toggle
+        self.assertIn('data-lang-only="en" hidden', html)
         self.assertIn('aria-current="true">বাংলা', html)
 
     def test_every_farmer_page_renders_in_bengali(self):
@@ -99,7 +111,7 @@ class SwitchTests(Base):
             resp = self.farmer.get(path)
             html = resp.get_data(as_text=True)
             self.assertEqual(resp.status_code, 200, path)
-            self.assertIn(phrase, html, path)
+            self.assertIn(phrase, self.visible(html), path)
             self.assertIn('class="lang-switch"', html, path)
 
     def test_reviewer_and_about_pages_stay_english(self):
@@ -112,24 +124,29 @@ class SwitchTests(Base):
     def test_bengali_report_page_has_draft_consent_and_script_text(self):
         self.bengali()
         html = self.farmer.get("/report").get_data(as_text=True)
-        self.assertIn(text.CONSENT_TEXT_BN[0], html)
-        self.assertIn(text.CONSENT_TEXT[0], html)  # English original in a details box
+        self.assertIn(text.CONSENT_TEXT_BN[0], self.visible(html))
+        self.assertIn(text.CONSENT_TEXT[0], html)  # English original in details box + hidden en block
+        self.assertIn('<div data-lang-only="en" hidden>', html)
         self.assertIn('name="consent_lang" value="bn"', html)
         if not text.CONSENT_BN_REVIEWED:
-            self.assertIn("খসড়া অনুবাদ", html)
+            self.assertIn("খসড়া অনুবাদ", self.visible(html))
         data = re.search(r'<script type="application/json" id="i18n-data">(.*?)</script>', html, re.S)
         strings = json.loads(data.group(1))
-        self.assertEqual(strings["gps_finding"], i18n.t("js.gps_finding", "bn"))
-        self.assertEqual(set(strings), {k[3:] for k in i18n.STRINGS if k.startswith("js.")})
+        self.assertEqual(set(strings), {"en", "bn"})
+        self.assertEqual(strings["bn"]["gps_finding"], i18n.t("js.gps_finding", "bn"))
+        self.assertEqual(strings["en"]["gps_finding"], i18n.t("js.gps_finding", "en"))
+        expected_keys = {k[3:] for k in i18n.STRINGS if k.startswith("js.")}
+        self.assertEqual(set(strings["bn"]), expected_keys)
+        self.assertEqual(set(strings["en"]), expected_keys)
 
     def test_validation_errors_in_bengali(self):
         self.bengali()
         resp = self.report(claimant_name=None, consent=None, latitude="95", longitude="87")
         html = resp.get_data(as_text=True)
         self.assertEqual(resp.status_code, 422)
-        self.assertIn("এটি পূরণ করা আবশ্যক।", html)
-        self.assertIn("রিপোর্ট জমা দেওয়ার আগে সম্মতি দেওয়া দরকার।", html)
-        self.assertIn("অক্ষাংশ ও দ্রাঘিমাংশ আবার দেখে নিন", html)
+        self.assertIn("এটি পূরণ করা আবশ্যক।", self.visible(html))
+        self.assertIn("রিপোর্ট জমা দেওয়ার আগে সম্মতি দেওয়া দরকার।", self.visible(html))
+        self.assertIn("অক্ষাংশ ও দ্রাঘিমাংশ আবার দেখে নিন", self.visible(html))
 
     def test_consent_version_follows_the_language_shown(self):
         en_case = self.new_case(consent_lang="en")
@@ -145,12 +162,13 @@ class SwitchTests(Base):
         self.bengali()
         case_id = self.new_case(consent_lang="bn")
         done = self.farmer.get(f"/report/done/{case_id}").get_data(as_text=True)
-        self.assertIn("এই দুটি কোড যত্ন করে রাখুন", done)
+        self.assertIn("এই দুটি কোড যত্ন করে রাখুন", self.visible(done))
         page = self.farmer.get(f"/track/{case_id}").get_data(as_text=True)
-        self.assertIn(text.FARMER_STATUS["SUBMITTED"]["bn"], page)
-        self.assertIn(text.FARMER_STATUS["SUBMITTED"]["next_bn"], page)
-        self.assertIn("কোনো সময়সীমা ঠিক করা নেই", page)  # scheme not known -> no deadline rule
-        self.assertNotIn(text.FARMER_STATUS["SUBMITTED"]["en"], page)
+        self.assertIn(text.FARMER_STATUS["SUBMITTED"]["bn"], self.visible(page))
+        self.assertIn(text.FARMER_STATUS["SUBMITTED"]["next_bn"], self.visible(page))
+        self.assertIn("কোনো সময়সীমা ঠিক করা নেই", self.visible(page))  # scheme not known -> no deadline rule
+        self.assertNotIn(text.FARMER_STATUS["SUBMITTED"]["en"], self.visible(page))
+        self.assertIn(text.FARMER_STATUS["SUBMITTED"]["en"], page)  # carried in data-i18n for in-place switch
 
     def test_errors_and_messages_in_bengali(self):
         self.bengali()
@@ -168,6 +186,52 @@ class SwitchTests(Base):
         resp = other.get("/no-such-page")
         self.assertEqual(resp.status_code, 404)
         self.assertIn('<html lang="en">', resp.get_data(as_text=True))  # not a farmer page
+
+    def test_in_place_bilingual_dom_payloads_and_flashed_messages(self):
+        for lang_code in ("en", "bn"):
+            other_code = "bn" if lang_code == "en" else "en"
+            self.farmer.get(f"/lang/{lang_code}?next=/")
+            for path in ("/", "/report", "/track", "/verify"):
+                html = self.farmer.get(path).get_data(as_text=True)
+                self.assertIn(f'data-set-lang="{lang_code}" aria-current="true"', html)
+                self.assertNotIn(f'data-set-lang="{other_code}" aria-current="true"', html)
+                self.assertIn('data-lang-cookie="pramaana_lang"', html)
+                i18n_spans = re.findall(r'data-i18n="([^"]+)">([^<]*)<', html)
+                self.assertTrue(i18n_spans, (lang_code, path))
+                for raw_json, rendered in i18n_spans:
+                    pair = json.loads(html_lib.unescape(raw_json))
+                    self.assertEqual(set(pair), {"en", "bn"})
+                    self.assertEqual(html_lib.unescape(rendered), pair[lang_code])
+        # Verify multi-step report form (Steps 1-5), select options, radio cards, and consent_lang switchable attrs
+        report_html = self.farmer.get("/report").get_data(as_text=True)
+        unescaped_report = html_lib.unescape(report_html)
+        for step_key in ("report.step_you", "report.step_field", "report.step_crop", "report.step_photos",
+                         "report.step_check", "report.s1", "report.s2", "report.s3", "report.s4", "report.s5"):
+            self.assertIn(i18n.t(step_key, "en"), unescaped_report)
+            self.assertIn(i18n.t(step_key, "bn"), unescaped_report)
+        opts = re.findall(r'<option value="([^"]+)" data-i18n="([^"]+)"', report_html)
+        self.assertEqual(len(opts), len(text.LABELS["tenancy"]) + len(text.LABELS["scheme"])
+                         + len(text.LABELS["intimation_status"]))
+        radios = re.findall(r'<input type="radio"[^>]+data-i18n-attrs="([^"]+)"', report_html)
+        self.assertEqual(len(radios), 2 + len(text.LABELS["damage_type"]))
+        self.assertIn('name="consent_lang" value="bn" data-i18n-attrs=', report_html)
+        # Flashed messages survive redirect with both languages so in-place toggle switches them too
+        case_id = self.new_case(consent_lang="bn")
+        page = self.farmer.get(f"/track/{case_id}").get_data(as_text=True)
+        tok = re.search(r'name="csrf_token" value="([^"]+)"', page).group(1)
+        resp = self.farmer.post(f"/track/{case_id}/evidence", data={"csrf_token": tok}, follow_redirects=True)
+        flash_html = resp.get_data(as_text=True)
+        self.assertIn(i18n.t("case.choose_file", "bn"), flash_html)
+        self.assertIn(i18n.t("case.choose_file", "en"), flash_html)
+        # Reviewer dashboard and case detail stay English even when pramaana_lang=bn cookie is set
+        rev, _ = self.reviewer()
+        self.bengali(rev)
+        for rpath in ("/reviewer", f"/reviewer/case/{case_id}", "/reviewer/audit"):
+            rresp = rev.get(rpath)
+            self.assertEqual(rresp.status_code, 200, rpath)
+            rhtml = rresp.get_data(as_text=True)
+            self.assertIn('<html lang="en">', rhtml, rpath)
+            self.assertNotIn('class="lang-switch"', rhtml, rpath)
 
 
 if __name__ == "__main__":

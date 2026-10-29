@@ -1,58 +1,60 @@
 {% extends "base.html" %}
 {% from "_macros.html" import input, select, label_for, error_for with context %}
+{% block title_i18n %}data-i18n-title="{{ i18n_json(tx('report.title')) }}"{% endblock %}
 {% block title %}{{ t('report.title') }}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<h1>{{ t('report.h1') }}</h1>
-<p class="muted">{{ t('report.intro_html')|safe }}</p>
+<h1>{{ tb('report.h1') }}</h1>
+<p class="muted">{{ tb('report.intro_html') }}</p>
 
 {% if errors or file_errors %}
 <div class="notice notice-danger" role="alert" tabindex="-1">
-  <strong>{{ t('report.fix') }}</strong>
+  <strong>{{ tb('report.fix') }}</strong>
   <ul class="bullets">
-    {% for k, v in errors.items() %}<li><a href="#{{ k }}">{{ fl(k) if k in F else k|replace('_',' ')|capitalize }}</a>: {{ v }}</li>{% endfor %}
-    {% for e in file_errors %}<li>{{ e }}</li>{% endfor %}
+    {% for k, v in errors.items() %}<li><a href="#{{ k }}">{{ fl(k)|bi if k in F else k|replace('_',' ')|capitalize }}</a>: {{ v|bi }}</li>{% endfor %}
+    {% for e in file_errors %}<li>{{ e|bi }}</li>{% endfor %}
   </ul>
-  <p class="small">{{ t('report.files_not_kept') }}</p>
+  <p class="small">{{ tb('report.files_not_kept') }}</p>
 </div>
 {% endif %}
 
-<ol class="stepper js-only" aria-label="{{ t('report.progress') }}">
-  <li>{{ t('report.step_you') }}</li><li>{{ t('report.step_field') }}</li><li>{{ t('report.step_crop') }}</li><li>{{ t('report.step_photos') }}</li><li>{{ t('report.step_check') }}</li>
+<ol class="stepper js-only" {{ ta({'aria-label': tx('report.progress')}) }}>
+  <li>{{ tb('report.step_you') }}</li><li>{{ tb('report.step_field') }}</li><li>{{ tb('report.step_crop') }}</li><li>{{ tb('report.step_photos') }}</li><li>{{ tb('report.step_check') }}</li>
 </ol>
 
 <form method="post" action="{{ url_for('report') }}" enctype="multipart/form-data" novalidate
       data-stepper data-hash-files data-draft-key="report" data-has-values="{{ '1' if values else '0' }}"
-      data-max-bytes="{{ 10 * 1024 * 1024 }}" data-busy-text="{{ t('report.busy') }}">
+      data-max-bytes="{{ 10 * 1024 * 1024 }}" {{ ta({'data-busy-text': tx('report.busy')}) }}>
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="hidden" name="submission_id" value="{{ submission_id }}">
   <input type="hidden" name="client_hashes" value="">
-  <input type="hidden" name="consent_lang" value="{{ consent_lang }}">
+  {# Records which consent text was on screen when the box was ticked; the switch updates it. #}
+  <input type="hidden" name="consent_lang" {{ ta({'value': pair('en', 'bn')}) }}>
 
   <fieldset class="step panel">
-    <legend>{{ t('report.s1') }}</legend>
-    <p class="step-intro">{{ t('report.s1_intro') }}</p>
+    <legend>{{ tb('report.s1') }}</legend>
+    <p class="step-intro">{{ tb('report.s1_intro') }}</p>
     <div class="form-group">
-      <span class="label">{{ t('report.record_type') }} <span class="req">*</span></span>
+      <span class="label">{{ tb('report.record_type') }} <span class="req">*</span></span>
       <div class="radio-cards">
-        <label><input type="radio" name="record_type" value="real" data-summary-label="{{ t('report.record_type_label') }}"
+        <label><input type="radio" name="record_type" value="real" {{ ta({'data-summary-label': tx('report.record_type_label')}) }}
           {% if values.get('record_type', 'real') == 'real' %}checked{% endif %}>
-          <span><strong>{{ t('report.real') }}</strong><br><span class="small muted">{{ t('report.real_hint') }}</span></span></label>
-        <label><input type="radio" name="record_type" value="field_test" data-summary-label="{{ t('report.record_type_label') }}"
+          <span><strong>{{ tb('report.real') }}</strong><br><span class="small muted">{{ tb('report.real_hint') }}</span></span></label>
+        <label><input type="radio" name="record_type" value="field_test" {{ ta({'data-summary-label': tx('report.record_type_label')}) }}
           {% if values.get('record_type') == 'field_test' %}checked{% endif %}>
-          <span><strong>{{ t('report.test') }}</strong><br><span class="small muted">{{ t('report.test_hint') }}</span></span></label>
+          <span><strong>{{ tb('report.test') }}</strong><br><span class="small muted">{{ tb('report.test_hint') }}</span></span></label>
       </div>
     </div>
     {{ input('claimant_name', values, errors, required=True, attrs='autocomplete="name" maxlength="120"') }}
     {{ input('guardian_name', values, errors, attrs='maxlength="120"') }}
-    {{ input('phone', values, errors, type='tel', hint=t('report.phone_hint'), attrs='inputmode="numeric" autocomplete="tel" maxlength="20"') }}
-    {{ input('assisted_by', values, errors, hint=t('report.assisted_hint'), attrs='maxlength="120"') }}
-    <div class="step-nav js-only"><span></span><button class="btn btn-primary" data-step-next>{{ t('report.next_field') }}</button></div>
+    {{ input('phone', values, errors, type='tel', hint=tx('report.phone_hint'), attrs='inputmode="numeric" autocomplete="tel" maxlength="20"') }}
+    {{ input('assisted_by', values, errors, hint=tx('report.assisted_hint'), attrs='maxlength="120"') }}
+    <div class="step-nav js-only"><span></span><button class="btn btn-primary" data-step-next>{{ tb('report.next_field') }}</button></div>
   </fieldset>
 
   <fieldset class="step panel">
-    <legend>{{ t('report.s2') }}</legend>
-    <p class="step-intro">{{ t('report.s2_intro') }}</p>
+    <legend>{{ tb('report.s2') }}</legend>
+    <p class="step-intro">{{ tb('report.s2_intro') }}</p>
     {{ input('village', values, errors, required=True, attrs='maxlength="120"') }}
     <div class="form-row-3">
       {{ input('gram_panchayat', values, errors) }}
@@ -66,111 +68,113 @@
     </div>
 
     <div class="card form-group{% if errors.get('latitude') %} has-error{% endif %}">
-      <h3>{{ t('report.location_h') }} <span class="opt">{{ t('report.location_opt') }}</span></h3>
-      <p class="small muted">{{ t('report.location_help') }}</p>
-      <button type="button" class="btn btn-secondary" data-gps-button hidden>{{ t('report.gps_button') }}</button>
+      <h3>{{ tb('report.location_h') }} <span class="opt">{{ tb('report.location_opt') }}</span></h3>
+      <p class="small muted">{{ tb('report.location_help') }}</p>
+      <button type="button" class="btn btn-secondary" data-gps-button hidden>{{ tb('report.gps_button') }}</button>
       <div id="gps-status" class="gps-status" role="status" aria-live="polite"></div>
       <input type="hidden" id="location_source" name="location_source" value="{{ values.get('location_source', 'manual') }}">
       <input type="hidden" id="location_accuracy_m" name="location_accuracy_m" value="{{ values.get('location_accuracy_m', '') }}">
       <div class="form-row">
-        {{ input('latitude', values, {}, type='text', attrs='inputmode="decimal" placeholder="' ~ t('report.lat_placeholder') ~ '"') }}
-        {{ input('longitude', values, {}, type='text', attrs='inputmode="decimal" placeholder="' ~ t('report.lon_placeholder') ~ '"') }}
+        {{ input('latitude', values, {}, type='text', attrs='inputmode="decimal"', i18n={'placeholder': tx('report.lat_placeholder')}) }}
+        {{ input('longitude', values, {}, type='text', attrs='inputmode="decimal"', i18n={'placeholder': tx('report.lon_placeholder')}) }}
       </div>
       {{ error_for('latitude', errors) }}
     </div>
 
-    <h3>{{ t('report.tenancy_h') }}</h3>
-    {{ select('tenancy_category', values, errors, L.tenancy, default='unsure', hint=t('report.tenancy_hint'), group='tenancy') }}
+    {{ select('tenancy_category', values, errors, L.tenancy, default='unsure', hint=tx('report.tenancy_hint'), group='tenancy') }}
     {{ input('landowner_name', values, errors, attrs='maxlength="120"') }}
-    {{ input('tenancy_documents', values, errors, hint=t('report.tenancy_docs_hint'), attrs='maxlength="500"') }}
-    <div class="step-nav js-only"><button class="btn btn-secondary" data-step-back>{{ t('back') }}</button><button class="btn btn-primary" data-step-next>{{ t('report.next_crop') }}</button></div>
+    {{ input('tenancy_documents', values, errors, hint=tx('report.tenancy_docs_hint'), attrs='maxlength="500"') }}
+    <div class="step-nav js-only"><button class="btn btn-secondary" data-step-back>{{ tb('back') }}</button><button class="btn btn-primary" data-step-next>{{ tb('report.next_crop') }}</button></div>
   </fieldset>
 
   <fieldset class="step panel">
-    <legend>{{ t('report.s3') }}</legend>
-    <p class="step-intro">{{ t('report.s3_intro') }}</p>
+    <legend>{{ tb('report.s3') }}</legend>
+    <p class="step-intro">{{ tb('report.s3_intro') }}</p>
     <div class="form-row-3">
-      {{ input('crop', values, errors, required=True, attrs='maxlength="80" placeholder="' ~ t('report.crop_placeholder') ~ '"') }}
-      {{ input('season', values, errors, attrs='maxlength="40" placeholder="' ~ t('report.season_placeholder') ~ '"') }}
+      {{ input('crop', values, errors, required=True, attrs='maxlength="80"', i18n={'placeholder': tx('report.crop_placeholder')}) }}
+      {{ input('season', values, errors, attrs='maxlength="40"', i18n={'placeholder': tx('report.season_placeholder')}) }}
       {{ input('area_acres', values, errors, type='text', attrs='inputmode="decimal"') }}
     </div>
     <div class="form-row">
       {{ input('incident_date', values, errors, type='date', required=True) }}
-      {{ input('incident_time', values, errors, type='time', hint=t('report.time_hint')) }}
+      {{ input('incident_time', values, errors, type='time', hint=tx('report.time_hint')) }}
     </div>
     <div class="form-group{% if errors.get('damage_type') %} has-error{% endif %}">
-      <span class="label">{{ fl('damage_type') }} <span class="req">*</span></span>
+      <span class="label">{{ fl('damage_type')|bi }} <span class="req">*</span></span>
       <div class="radio-cards">
         {% for key in L.damage_type %}
-          <label><input type="radio" name="damage_type" value="{{ key }}" data-summary-label="{{ t('report.damage_type_label') }}" required
-            {% if values.get('damage_type') == key %}checked{% endif %}> <span>{{ key|label('damage_type') }}</span></label>
+          <label><input type="radio" name="damage_type" value="{{ key }}" {{ ta({'data-summary-label': tx('report.damage_type_label')}) }} required
+            {% if values.get('damage_type') == key %}checked{% endif %}> <span>{{ tl('damage_type', key)|bi }}</span></label>
         {% endfor %}
       </div>
       {{ error_for('damage_type', errors) }}
     </div>
     <div class="form-group{% if errors.get('damage_description') %} has-error{% endif %}">
       {{ label_for('damage_description', True) }}
-      <textarea id="damage_description" name="damage_description" required maxlength="2000" data-summary-label="{{ t('report.description_label') }}"
-        placeholder="{{ t('report.description_placeholder') }}">{{ values.get('damage_description', '') }}</textarea>
+      <textarea id="damage_description" name="damage_description" required maxlength="2000"
+        {{ ta({'data-summary-label': tx('report.description_label'), 'placeholder': tx('report.description_placeholder')}) }}>{{ values.get('damage_description', '') }}</textarea>
       {{ error_for('damage_description', errors) }}
     </div>
-    {{ input('reported_affected_pct', values, errors, type='text', hint=t('report.pct_hint'), attrs='inputmode="numeric"') }}
+    {{ input('reported_affected_pct', values, errors, type='text', hint=tx('report.pct_hint'), attrs='inputmode="numeric"') }}
     {{ select('insurance_scheme', values, errors, L.scheme, default='UNKNOWN', group='scheme') }}
     {{ select('intimation_status', values, errors, L.intimation_status, default='unknown', group='intimation_status') }}
     {{ input('intimation_reference', values, errors, attrs='maxlength="80"') }}
-    <div class="step-nav js-only"><button class="btn btn-secondary" data-step-back>{{ t('back') }}</button><button class="btn btn-primary" data-step-next>{{ t('report.next_photos') }}</button></div>
+    <div class="step-nav js-only"><button class="btn btn-secondary" data-step-back>{{ tb('back') }}</button><button class="btn btn-primary" data-step-next>{{ tb('report.next_photos') }}</button></div>
   </fieldset>
 
   <fieldset class="step panel">
-    <legend>{{ t('report.s4') }}</legend>
-    <p class="step-intro">{{ t('report.s4_intro') }}</p>
+    <legend>{{ tb('report.s4') }}</legend>
+    <p class="step-intro">{{ tb('report.s4_intro') }}</p>
     <div class="form-group">
-      <label for="photos">{{ fl('photos') }} <span class="opt">JPEG, PNG, WebP, HEIC</span></label>
-      <input type="file" id="photos" name="photos" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" multiple data-summary-label="{{ t('report.photos_label') }}">
+      <label for="photos">{{ fl('photos')|bi }} <span class="opt">JPEG, PNG, WebP, HEIC</span></label>
+      <input type="file" id="photos" name="photos" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" multiple {{ ta({'data-summary-label': tx('report.photos_label')}) }}>
       <ul class="file-list" id="photos-list" aria-live="polite"></ul>
     </div>
     <div class="form-group">
-      <label for="documents">{{ fl('documents') }} <span class="opt">{{ t('report.doc_types') }}</span></label>
-      <input type="file" id="documents" name="documents" accept="application/pdf,image/jpeg,image/png" multiple data-summary-label="{{ t('report.documents_label') }}">
+      <label for="documents">{{ fl('documents')|bi }} <span class="opt">{{ tb('report.doc_types') }}</span></label>
+      <input type="file" id="documents" name="documents" accept="application/pdf,image/jpeg,image/png" multiple {{ ta({'data-summary-label': tx('report.documents_label')}) }}>
       <ul class="file-list" id="documents-list" aria-live="polite"></ul>
     </div>
     <div class="form-group">
-      <label for="voice">{{ fl('voice') }}</label>
-      <input type="file" id="voice" name="voice" accept="audio/*" data-summary-label="{{ t('report.voice_label') }}">
+      <label for="voice">{{ fl('voice')|bi }}</label>
+      <input type="file" id="voice" name="voice" accept="audio/*" {{ ta({'data-summary-label': tx('report.voice_label')}) }}>
       <ul class="file-list" id="voice-list" aria-live="polite"></ul>
     </div>
-    <p class="hint">{{ t('report.fingerprint_hint') }}</p>
-    <div class="step-nav js-only"><button class="btn btn-secondary" data-step-back>{{ t('back') }}</button><button class="btn btn-primary" data-step-next>{{ t('report.next_check') }}</button></div>
+    <p class="hint">{{ tb('report.fingerprint_hint') }}</p>
+    <div class="step-nav js-only"><button class="btn btn-secondary" data-step-back>{{ tb('back') }}</button><button class="btn btn-primary" data-step-next>{{ tb('report.next_check') }}</button></div>
   </fieldset>
 
   <fieldset class="step panel" data-summary>
-    <legend>{{ t('report.s5') }}</legend>
+    <legend>{{ tb('report.s5') }}</legend>
     <div class="js-only review-summary">
-      <h3>{{ t('report.answers') }}</h3>
+      <h3>{{ tb('report.answers') }}</h3>
       <div id="review-summary"></div>
-      <p class="small"><a href="#" data-step-goto="0">{{ t('report.change') }}</a></p>
+      <p class="small"><a href="#" data-step-goto="0">{{ tb('report.change') }}</a></p>
     </div>
     <div class="consent-box form-group{% if errors.get('consent') %} has-error{% endif %}">
-      <h3>{{ t('report.consent_h') }}</h3>
-      {% if consent_is_draft %}<p class="small notice notice-warn">{{ t('report.consent_draft') }}</p>{% endif %}
-      <ul>{% for line in consent_text %}<li>{{ line }}</li>{% endfor %}</ul>
-      {% if consent_original %}
-        <details class="more"><summary>{{ t('report.consent_original') }}</summary>
-          <ul lang="en">{% for line in consent_original %}<li>{{ line }}</li>{% endfor %}</ul>
+      <h3>{{ tb('report.consent_h') }}</h3>
+      <div data-lang-only="en" {% if lang != 'en' %}hidden{% endif %}>
+        <ul lang="en">{% for line in consent_en %}<li>{{ line }}</li>{% endfor %}</ul>
+      </div>
+      <div data-lang-only="bn" {% if lang != 'bn' %}hidden{% endif %}>
+        {% if consent_bn_draft %}<p class="small notice notice-warn">{{ tb('report.consent_draft') }}</p>{% endif %}
+        <ul lang="bn">{% for line in consent_bn %}<li>{{ line }}</li>{% endfor %}</ul>
+        <details class="more"><summary>{{ tb('report.consent_original') }}</summary>
+          <ul lang="en">{% for line in consent_en %}<li>{{ line }}</li>{% endfor %}</ul>
         </details>
-      {% endif %}
-      <p class="small muted" lang="{{ 'en' if lang == 'bn' else 'bn' }}">{{ t('report.consent_other_lang') }}</p>
+      </div>
+      <p class="small muted" {{ ta({'lang': pair('bn', 'en')}) }}>{{ tb('report.consent_other_lang') }}</p>
       <label class="check" for="consent">
         <input type="checkbox" id="consent" name="consent" value="yes" required {% if errors.get('consent') %}aria-invalid="true"{% endif %}>
-        <span>{{ t('report.consent_agree') }}</span>
+        <span>{{ tb('report.consent_agree') }}</span>
       </label>
       {{ error_for('consent', errors) }}
     </div>
     <p class="small muted" id="draft-status" role="status"></p>
     <div class="step-nav">
-      <span class="actions"><button class="btn btn-secondary js-only-inline" data-step-back>{{ t('back') }}</button>
-        <button type="button" class="btn btn-secondary js-only-inline" id="draft-clear">{{ t('report.clear_draft') }}</button></span>
-      <button type="submit" class="btn btn-primary">{{ t('report.submit') }}</button>
+      <span class="actions"><button class="btn btn-secondary js-only-inline" data-step-back>{{ tb('back') }}</button>
+        <button type="button" class="btn btn-secondary js-only-inline" id="draft-clear">{{ tb('report.clear_draft') }}</button></span>
+      <button type="submit" class="btn btn-primary">{{ tb('report.submit') }}</button>
     </div>
   </fieldset>
 </form>

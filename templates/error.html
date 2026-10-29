@@ -3,9 +3,9 @@
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <section class="panel">
-  <h1>{% if code in (404, 403, 429, 413) %}{{ t('error.' ~ code) }}{% else %}{{ t('error.other') }}{% endif %}</h1>
-  <p>{{ message }}</p>
-  <div class="actions"><a class="btn btn-secondary" href="{{ request.referrer if request.referrer and request.referrer.startswith(request.host_url) else url_for('index') }}">{{ t('error.back') }}</a>
-    <a class="btn btn-primary" href="{{ url_for('index') }}">{{ t('error.home') }}</a></div>
+  <h1>{% if code in (404, 403, 429, 413) %}{{ tb('error.' ~ code) }}{% else %}{{ tb('error.other') }}{% endif %}</h1>
+  <p>{{ message|bi }}</p>
+  <div class="actions"><a class="btn btn-secondary" href="{{ request.referrer if request.referrer and request.referrer.startswith(request.host_url) else url_for('index') }}">{{ tb('error.back') }}</a>
+    <a class="btn btn-primary" href="{{ url_for('index') }}">{{ tb('error.home') }}</a></div>
 </section>
 {% endblock %}

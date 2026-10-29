@@ -1,35 +1,36 @@
 {% extends "base.html" %}
+{% block title_i18n %}data-i18n-title="{{ i18n_json(tx('verify.title')) }}"{% endblock %}
 {% block title %}{{ t('verify.title') }}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <section class="panel">
-  <h1>{{ t('verify.title') }}</h1>
-  <p>{{ t('verify.intro') }}</p>
-  <form method="post" action="{{ url_for('verify_file') }}" enctype="multipart/form-data" data-busy-text="{{ t('verify.busy') }}">
+  <h1>{{ tb('verify.title') }}</h1>
+  <p>{{ tb('verify.intro') }}</p>
+  <form method="post" action="{{ url_for('verify_file') }}" enctype="multipart/form-data" {{ ta({'data-busy-text': tx('verify.busy')}) }}>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="form-group"><label for="file">{{ t('verify.file') }} <span class="req">*</span></label>
+    <div class="form-group"><label for="file">{{ tb('verify.file') }} <span class="req">*</span></label>
       <input type="file" id="file" name="file" required></div>
-    <button type="submit" class="btn btn-primary">{{ t('verify.check') }}</button>
+    <button type="submit" class="btn btn-primary">{{ tb('verify.check') }}</button>
   </form>
 </section>
 
 {% if result %}
 <section class="panel" aria-live="polite">
-  {% if result.error %}<div class="notice notice-danger">{{ result.error }}</div>
+  {% if result.error %}<div class="notice notice-danger">{{ result.error|bi }}</div>
   {% else %}
-    <h2>{{ t('verify.result', name=result.filename) }}</h2>
+    <h2>{{ tb('verify.result', name=result.filename) }}</h2>
     <p class="hash">SHA-256: {{ result.sha256 }}</p>
     {% if result.documents or result.evidence %}
-      <div class="notice notice-success">{{ t('verify.match_html')|safe }}</div>
+      <div class="notice notice-success">{{ tb('verify.match_html') }}</div>
       <ul class="bullets">
-        {% for d in result.documents %}<li>{{ t('verify.doc_item', doc_id=d.doc_id, version=d.version, case_id=d.case_id, when=d.generated_at_utc) }}
-          {% if d.is_synthetic %}<span class="badge badge-red">{{ t('badge.synthetic') }}</span>{% endif %}</li>{% endfor %}
-        {% for e in result.evidence %}<li>{{ t('verify.ev_item', evidence_id=e.evidence_id, kind=e.kind|label('evidence_kind'), case_id=e.case_id, when=e.uploaded_at_utc) }}
-          {% if e.is_synthetic %}<span class="badge badge-red">{{ t('badge.synthetic_short') }}</span>{% endif %}</li>{% endfor %}
+        {% for d in result.documents %}<li>{{ tb('verify.doc_item', doc_id=d.doc_id, version=d.version, case_id=d.case_id, when=d.generated_at_utc) }}
+          {% if d.is_synthetic %}<span class="badge badge-red">{{ tb('badge.synthetic') }}</span>{% endif %}</li>{% endfor %}
+        {% for e in result.evidence %}<li>{{ tb('verify.ev_item', evidence_id=e.evidence_id, kind=tlp('evidence_kind', e.kind), case_id=e.case_id, when=e.uploaded_at_utc) }}
+          {% if e.is_synthetic %}<span class="badge badge-red">{{ tb('badge.synthetic_short') }}</span>{% endif %}</li>{% endfor %}
       </ul>
-      <p class="small muted">{{ t('verify.match_note') }}</p>
+      <p class="small muted">{{ tb('verify.match_note') }}</p>
     {% else %}
-      <div class="notice notice-warn">{{ t('verify.no_match_html')|safe }}</div>
+      <div class="notice notice-warn">{{ tb('verify.no_match_html') }}</div>
     {% endif %}
   {% endif %}
 </section>

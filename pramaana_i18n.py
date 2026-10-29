@@ -15,7 +15,10 @@ Rules for editing:
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict
+
+from markupsafe import Markup
 
 SUPPORTED = ("en", "bn")
 DEFAULT_LANG = "en"
@@ -510,11 +513,77 @@ def normalise(lang: Any) -> str:
     return lang if lang in SUPPORTED else DEFAULT_LANG
 
 
+def _params_for(lang: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    """A parameter may itself be bilingual: {"en": ..., "bn": ...}."""
+    return {k: (v[lang] if isinstance(v, dict) and set(v) == {"en", "bn"} else v) for k, v in params.items()}
+
+
 def t(key: str, lang: str, **params: Any) -> str:
     """Text for `key` in `lang` (falls back to English). Raises KeyError for unknown keys."""
     entry = STRINGS[key]
-    text = entry.get(normalise(lang)) or entry["en"]
-    return text.format(**params) if params else text
+    lang = normalise(lang)
+    text = entry.get(lang) or entry["en"]
+    return text.format(**_params_for(lang, params)) if params else text
+
+
+class Bi(str):
+    """Text held in both languages.
+
+    It *is* the text in the language the page was rendered in, so code that
+    treats it as a plain string keeps working; `en` and `bn` let the page switch
+    language in place without a reload (see span() / attrs() and pramaana.js).
+    """
+
+    en: str
+    bn: str
+    html: bool
+
+    def __new__(cls, en: str, bn: str, lang: str, html: bool = False) -> "Bi":
+        obj = super().__new__(cls, (bn or en) if normalise(lang) == "bn" else en)
+        obj.en, obj.bn, obj.html = en, bn or en, html
+        return obj
+
+    def as_dict(self) -> Dict[str, str]:
+        return {"en": self.en, "bn": self.bn}
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, str], lang: str) -> "Bi":
+        return cls(d.get("en", ""), d.get("bn", ""), lang)
+
+
+def both(key: str, lang: str, **params: Any) -> Bi:
+    """`key` in both languages, shown in `lang`. Keys ending in _html carry trusted markup."""
+    return Bi(t(key, "en", **params), t(key, "bn", **params), lang, html=key.endswith("_html"))
+
+
+def span(text: Any, tag: str = "span") -> Markup:
+    """Render bilingual text as an element the page can switch; plain text is just escaped."""
+    if not isinstance(text, Bi):
+        return Markup.escape(text)
+    payload = json.dumps(text.as_dict(), ensure_ascii=False)
+    if text.html:  # our own fixed markup (keys ending in _html), never user input
+        return Markup('<{0} data-i18n-html="{1}">{2}</{0}>').format(Markup(tag), payload, Markup(str(text)))
+    return Markup('<{0} data-i18n="{1}">{2}</{0}>').format(Markup(tag), payload, str(text))
+
+
+def attrs(*mappings: Dict[str, Any]) -> Markup:
+    """Attributes in the current language plus a data-i18n-attrs map to switch them.
+
+    Several mappings are merged, so a macro can add its own attributes to a caller's.
+    """
+    mapping: Dict[str, Any] = {}
+    for m in mappings:
+        mapping.update(m or {})
+    parts = [Markup('{}="{}"').format(Markup(name), str(value)) for name, value in mapping.items()]
+    data = {name: (value.as_dict() if isinstance(value, Bi) else {"en": str(value), "bn": str(value)})
+            for name, value in mapping.items()}
+    parts.append(Markup('data-i18n-attrs="{}"').format(json.dumps(data, ensure_ascii=False)))
+    return Markup(" ").join(parts)
+
+
+def i18n_json(text: Bi) -> str:
+    """The data-i18n payload for elements that cannot hold a <span> (option, title)."""
+    return json.dumps(text.as_dict(), ensure_ascii=False)
 
 
 def js_strings(lang: str) -> Dict[str, str]:

@@ -3,43 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Pramaana{% endblock %} — Pramaana (প্রমাণ)</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='pramaana.css') }}">
-  <script src="{{ url_for('static', filename='pramaana.js') }}" defer></script>
+  <title {% block title_i18n %}{% endblock %} data-title-suffix=" — Pramaana (প্রমাণ)">{% block title %}Pramaana{% endblock %} — Pramaana (প্রমাণ)</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='pramaana.css', v=app_version) }}">
+  <script src="{{ url_for('static', filename='pramaana.js', v=app_version) }}" defer></script>
 </head>
 <body>
-<a class="skip-link" href="#main">{{ t('skip') }}</a>
+<a class="skip-link" href="#main">{{ tb('skip') }}</a>
 <header class="site-header">
   <div class="header-inner">
     <a class="brand" href="{{ url_for('index') }}">
-      {% if lang == 'bn' %}
-      <div class="brand-title">প্রমাণ <span class="bn" lang="en">(PRAMAANA)</span></div>
-      {% else %}
-      <div class="brand-title">PRAMAANA <span class="bn" lang="bn">(প্রমাণ)</span></div>
-      {% endif %}
-      <div class="brand-sub">{{ t('brand.sub') }}</div>
+      <div class="brand-title" data-lang-only="en" {% if lang != 'en' %}hidden{% endif %}>PRAMAANA <span class="bn" lang="bn">(প্রমাণ)</span></div>
+      <div class="brand-title" data-lang-only="bn" {% if lang != 'bn' %}hidden{% endif %}>প্রমাণ <span class="bn" lang="en">(PRAMAANA)</span></div>
+      <div class="brand-sub">{{ tb('brand.sub') }}</div>
     </a>
-    <nav class="nav" aria-label="{{ t('nav.main') }}">
+    <nav class="nav" {{ ta({'aria-label': tx('nav.main')}) }}>
       {% set ep = request.endpoint or '' %}
-      <a href="{{ url_for('report') }}" {% if ep == 'report' %}aria-current="page"{% endif %}>{{ t('nav.report') }}</a>
-      <a href="{{ url_for('track') }}" {% if ep.startswith('track') %}aria-current="page"{% endif %}>{{ t('nav.track') }}</a>
-      <a href="{{ url_for('verify_file') }}" {% if ep == 'verify_file' %}aria-current="page"{% endif %}>{{ t('nav.verify') }}</a>
-      <a href="{{ url_for('about') }}" {% if ep == 'about' %}aria-current="page"{% endif %}>{{ t('nav.about') }}</a>
+      <a href="{{ url_for('report') }}" {% if ep == 'report' %}aria-current="page"{% endif %}>{{ tb('nav.report') }}</a>
+      <a href="{{ url_for('track') }}" {% if ep.startswith('track') %}aria-current="page"{% endif %}>{{ tb('nav.track') }}</a>
+      <a href="{{ url_for('verify_file') }}" {% if ep == 'verify_file' %}aria-current="page"{% endif %}>{{ tb('nav.verify') }}</a>
+      <a href="{{ url_for('about') }}" {% if ep == 'about' %}aria-current="page"{% endif %}>{{ tb('nav.about') }}</a>
       {% if reviewer %}
-        <a href="{{ url_for('reviewer_dashboard') }}" {% if ep.startswith('reviewer') %}aria-current="page"{% endif %}>{{ t('nav.reviewer') }}</a>
+        <a href="{{ url_for('reviewer_dashboard') }}" {% if ep.startswith('reviewer') %}aria-current="page"{% endif %}>{{ tb('nav.reviewer') }}</a>
         <form method="post" action="{{ url_for('reviewer_logout') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit">{{ t('nav.sign_out', user=reviewer.username) }}</button>
+          <button type="submit">{{ tb('nav.sign_out', user=reviewer.username) }}</button>
         </form>
       {% else %}
-        <a href="{{ url_for('reviewer_login') }}" {% if ep == 'reviewer_login' %}aria-current="page"{% endif %}>{{ t('nav.reviewer_signin') }}</a>
+        <a href="{{ url_for('reviewer_login') }}" {% if ep == 'reviewer_login' %}aria-current="page"{% endif %}>{{ tb('nav.reviewer_signin') }}</a>
       {% endif %}
     </nav>
     {% if farmer_page %}
-    <nav class="lang-switch" aria-label="{{ t('lang.label') }}">
+    {# Works as plain links without JavaScript; pramaana.js switches the page in place instead. #}
+    <nav class="lang-switch" {{ ta({'aria-label': tx('lang.label')}) }} data-lang-cookie="{{ lang_cookie }}">
       {% for code, name in lang_names.items() %}
         <a href="{{ url_for('set_language', code=code, next=request.path) }}" lang="{{ code }}" hreflang="{{ code }}"
-           {% if code == lang %}aria-current="true"{% endif %}>{{ name }}</a>
+           data-set-lang="{{ code }}" {% if code == lang %}aria-current="true"{% endif %}>{{ name }}</a>
       {% endfor %}
     </nav>
     {% endif %}
@@ -48,13 +46,13 @@
 <main id="main" class="{% block main_class %}{% endblock %}">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for cat, msg in messages %}
-      <div class="notice notice-{{ {'error':'danger','success':'success','info':'info'}.get(cat, 'info') }}" role="{{ 'alert' if cat == 'error' else 'status' }}">{{ msg }}</div>
+      <div class="notice notice-{{ {'error':'danger','success':'success','info':'info'}.get(cat, 'info') }}" role="{{ 'alert' if cat == 'error' else 'status' }}">{{ msg|bi }}</div>
     {% endfor %}
   {% endwith %}
   {% block content %}{% endblock %}
 </main>
 <footer class="site-footer">
-  {{ t('footer', version=app_version) }} <a href="{{ url_for('about') }}">{{ t('footer.limits') }}</a>
+  {{ tb('footer', version=app_version) }} <a href="{{ url_for('about') }}">{{ tb('footer.limits') }}</a>
 </footer>
 <script type="application/json" id="i18n-data">{{ js_i18n|tojson }}</script>
 </body>

@@ -1,23 +1,24 @@
 {% extends "base.html" %}
+{% block title_i18n %}data-i18n-title="{{ i18n_json(tx('track.title')) }}"{% endblock %}
 {% block title %}{{ t('track.title') }}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <section class="panel">
-  <h1>{{ t('track.title') }}</h1>
-  <p class="muted">{{ t('track.intro') }}</p>
-  {% if error %}<div class="notice notice-danger" role="alert">{{ error }}</div>{% endif %}
+  <h1>{{ tb('track.title') }}</h1>
+  <p class="muted">{{ tb('track.intro') }}</p>
+  {% if error %}<div class="notice notice-danger" role="alert">{{ error|bi }}</div>{% endif %}
   <form method="post" action="{{ url_for('track') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
-      <label for="case_id">{{ t('done.case_id') }} <span class="req">*</span></label>
+      <label for="case_id">{{ tb('done.case_id') }} <span class="req">*</span></label>
       <input type="text" id="case_id" name="case_id" required autocapitalize="characters" placeholder="PRM-2026-XXXXXX" autocomplete="off">
     </div>
     <div class="form-group">
-      <label for="tracking_code">{{ t('done.tracking_code') }} <span class="req">*</span></label>
+      <label for="tracking_code">{{ tb('done.tracking_code') }} <span class="req">*</span></label>
       <input type="text" id="tracking_code" name="tracking_code" required autocapitalize="characters" autocomplete="off">
     </div>
-    <button type="submit" class="btn btn-primary btn-block">{{ t('track.open') }}</button>
+    <button type="submit" class="btn btn-primary btn-block">{{ tb('track.open') }}</button>
   </form>
-  <p class="small muted">{{ t('track.lost') }}</p>
+  <p class="small muted">{{ tb('track.lost') }}</p>
 </section>
 {% endblock %}
