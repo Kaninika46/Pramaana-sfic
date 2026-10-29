@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}About &amp; limitations{% endblock %}
+{% block content %}
+<h1>About Pramaana and its limits</h1>
+<p class="muted">Read this before relying on anything Pramaana produces.</p>
+
+<div class="grid grid-2">
+<section class="panel">
+  <h2>What Pramaana is — and is not</h2>
+  <ul class="bullets">
+    <li>An evidence-organisation and claim-<em>preparation</em> tool built as a student public-interest technology project.</li>
+    <li><strong>Not</strong> a court, government authority, insurer, legal-aid authority or decision-maker.</li>
+    <li><strong>Not connected</strong> to any DLSA, insurer, government department or official portal. "Reviewer" means a signed-in member of the project's internal review workflow.</li>
+    <li>It never files an intimation or claim, and never promises approval, compensation or admissibility.</li>
+    <li>Intended deployment region: Ghatal subdivision, Paschim Medinipur. Each case uses only <em>its own</em> recorded location.</li>
+  </ul>
+</section>
+
+<section class="panel">
+  <h2>What a "verified" fingerprint means</h2>
+  <div class="distinction-grid">
+    <div class="card"><strong>File integrity ✓ checked by Pramaana</strong>The stored bytes still match the SHA-256 recorded on upload.</div>
+    <div class="card"><strong>Source authenticity ✗ not checked</strong>Who created the file, and whether it is genuine.</div>
+    <div class="card"><strong>Location ✗ not proven</strong>Phone GPS and photo metadata are reported values and can be wrong or edited.</div>
+    <div class="card"><strong>Time ✗ not proven</strong>Upload time is the server clock; capture time in a photo is unverified.</div>
+    <div class="card"><strong>Scientific interpretation ⚠ indicator only</strong>Satellite numbers are indicators with stated limitations.</div>
+    <div class="card"><strong>Legal admissibility ✗ not determined</strong>A matter for courts and qualified lawyers.</div>
+  </div>
+</section>
+</div>
+
+<section class="panel">
+  <h2>Satellite method ({{ analysis_version }})</h2>
+  <p>When Google Earth Engine is configured, a reviewer can run, for the case's own point and incident date:</p>
+  <ul class="bullets">
+    <li><strong>Sentinel-1 SAR</strong> (<code>COPERNICUS/S1_GRD</code>, IW, VV): first acquisition within {{ params.s1_post_window_days }} days after the incident, compared with a same-orbit median baseline from {{ params.s1_baseline_days }} days ending {{ params.s1_baseline_gap_days }} days before. Results are shown at thresholds {{ params.s1_sensitivity_thresholds_db|join(', ') }} dB (±{{ params.s1_uncertain_margin_db }} dB uncertainty band) so their sensitivity is visible.</li>
+    <li><strong>Sentinel-2 NDVI</strong> (<code>COPERNICUS/S2_SR_HARMONIZED</code>, SCL cloud mask): median NDVI {{ params.s2_pre_window_days }} days before vs {{ params.s2_post_window_days }} days after, with the cloud-free fraction reported.</li>
+    <li>Area analysed: a {{ params.aoi_radius_m }} m radius around the recorded point (not a surveyed boundary).</li>
+  </ul>
+  <h3>Limitations</h3>
+  <ul class="bullets">{% for l in limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+  <p class="small muted">If Earth Engine is not configured, the app says so and never substitutes synthetic or other-location data for a real case.</p>
+</section>
+
+<section class="panel">
+  <h2>Legal references and their verification status</h2>
+  <p class="notice notice-warn">The items below need checking by a qualified legal professional against current, authoritative sources before real use.</p>
+  {% set cit = rules.get('statutory_citations', {}) %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Reference</th><th>Status recorded by project legal lead</th></tr></thead>
+    <tbody>
+    {% for key in ('bsa_section_63_4', 'wblra_section_21b', 'pmfby_72h_trigger', 'dpdp_act_2023') %}{% if cit.get(key) %}
+      <tr><td>{{ cit[key].short_citation }}</td><td>{{ cit[key].verification_status }}</td></tr>
+    {% endif %}{% endfor %}
+    </tbody></table></div>
+  <h3>Engineering-audit flags</h3>
+  <ul class="bullets">
+    {% for item in rules.get('software_audit_flags', {}).get('items', []) %}
+      <li><span class="badge badge-amber">{{ item.flag }}</span> <code>{{ item.ref }}</code> — {{ item.detail }}</li>
+    {% endfor %}
+  </ul>
+  <details class="more"><summary>Section 21B text as recorded by the legal lead</summary>
+    <p class="small">{{ cit.get('wblra_section_21b', {}).get('verbatim_section_text', '') }}</p>
+    <p class="small muted">{{ cit.get('wblra_section_21b', {}).get('insertion_history', '') }}</p>
+  </details>
+</section>
+
+<section class="panel" id="field-testing">
+  <h2>Field testing status</h2>
+  <p><strong>No field test has been carried out or documented yet.</strong> A first usability and feasibility test is
+    planned with one volunteer farmer in Gahira, Paschim Medinipur (exact location to be confirmed on the day). Gahira is the
+    test location; Ghatal is the intended deployment region — they are recorded separately. A single test is a
+    usability check, not evidence of broad effectiveness. Use the "Field test of this app" option for such records.
+    The protocol is in <code>docs/FIELD_TESTING.md</code>.</p>
+</section>
+{% endblock %}

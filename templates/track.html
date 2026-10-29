@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Track a case{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<section class="panel">
+  <h1>Track a case</h1>
+  <p class="muted">Enter the case ID and tracking code you received when you submitted the report.</p>
+  {% if error %}<div class="notice notice-danger" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('track') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group">
+      <label for="case_id">Case ID <span class="req">*</span></label>
+      <input type="text" id="case_id" name="case_id" required autocapitalize="characters" placeholder="PRM-2026-XXXXXX" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="tracking_code">Tracking code <span class="req">*</span></label>
+      <input type="text" id="tracking_code" name="tracking_code" required autocapitalize="characters" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Open case</button>
+  </form>
+  <p class="small muted">Lost your code? Ask the field operator or the project team. For your privacy, codes cannot be recovered on this page.</p>
+</section>
+{% endblock %}

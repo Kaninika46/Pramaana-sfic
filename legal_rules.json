@@ -1,0 +1,161 @@
+{
+  "metadata": {
+    "jurisdiction": "Ghatal Subdivision, Paschim Medinipur, West Bengal, India",
+    "coordinates_reference": "22.6654 N, 87.7218 E",
+    "owner_role": "SFIC East Legal Research Lead (Law Student)",
+    "last_reviewed": "2026-10-25",
+    "verification_legend": {
+      "VERIFIED_PRIMARY": "Text checked word-for-word against a primary/official source by the law student.",
+      "VERIFIED_SECONDARY": "Corroborated by an independent secondary source; primary page reference still to be recorded.",
+      "OPEN": "Still requires a check before submission."
+    }
+  },
+  "statutory_citations": {
+    "wblra_section_21b": {
+      "short_citation": "Section 21B of the West Bengal Land Reforms Act, 1955 (statutory presumption of bargadar cultivation).",
+      "verification_status": "VERIFIED_PRIMARY",
+      "verified_against": "PRS India copy of the West Bengal Land Reforms Act, 1955 (law student); independently corroborated against Indian Kanoon text on 2026-10-25.",
+      "verbatim_section_text": "21B. Person cultivating land of another person to be presumed to be a bargadar in certain cases.—A person lawfully cultivating any land belonging to another person shall be presumed to be a bargadar in respect of such land if such person is not a member of the family of the other person whose land he cultivates and the burden of proving that such person is not a bargadar or that the land is in his personal cultivation shall, notwithstanding anything to the contrary contained in any other law for the time being in force, lie on the person who alleges that the person cultivating the land is not a bargadar in respect of such land.",
+      "insertion_history": "Inserted by the West Bengal Land Reforms (Amendment) Act, 1969 (West Ben. Act XI of 1969).",
+      "insertion_history_status": "VERIFIED_PRIMARY (per law student, PRS India copy footnote)",
+      "applicability_conditions": [
+        "The person must be lawfully cultivating land belonging to another person.",
+        "The person must not be a member of the family of the landowner."
+      ],
+      "crop_share_rule_note": "Crop-share is not a fixed constant under the Act; it depends on who supplies the inputs. The field stays blank unless entered and verified."
+    },
+    "bsa_section_63_4": {
+      "short_citation": "Section 63(4) of the Bharatiya Sakshya Adhiniyam (BSA), 2023 (Part A & Part B of The Schedule).",
+      "verification_status": "VERIFIED_PRIMARY (structure); case citation VERIFIED_SECONDARY",
+      "part_a_signatory": "DLSA PLV (as person in charge of the claim on the farmer's behalf).",
+      "part_b_signatory": "Geomatics expert / system administrator.",
+      "case_reference": {
+        "reported_name": "Pune Bar Association v. Union of India, W.P. (C) No. 599 of 2026",
+        "reported_decision_date": "2026-05-22",
+        "reported_holding": "Upheld Section 63(4) and the Schedule; clarified that Part B need not be signed exclusively by a Section 79A notified Examiner, leaving the scope of 'expert' under Part B open.",
+        "status": "VERIFIED"
+      },
+      "footnote_text": "The Supreme Court has kept the scope of 'expert' under Part B open; we conservatively designate a qualified geomatics professional.",
+      "draft_status_label": "DRAFT CERTIFICATE — PENDING SIGNATURE (VOID IF SYNTHETIC DEMO DATA IS PRESENT)"
+    },
+    "pmfby_72h_trigger": {
+      "short_citation": "Revamped PMFBY Operational Guidelines (72-hour intimation trigger).",
+      "verification_status": "VERIFIED_PRIMARY (clause numbers, per law student); document title/date/page still to be recorded",
+      "document_title": "Revamped Operational Guidelines, Pradhan Mantri Fasal Bima Yojana (PMFBY), Ministry of Agriculture & Farmers Welfare, Government of India",
+      "document_date_and_page": "OPEN — law student to record edition date and page number of cl. 21.5.5.4",
+      "primary_clause": {
+        "clause": "21.5.5.4",
+        "text": "Intimation may be given within 72 hours by the farmer either directly through the 'Crop Insurance App' or on dedicated centralized toll-free number of Krishi Rakshak Portal & Helpline (14447)."
+      },
+      "supporting_clauses": [
+        {
+          "clause": "21.5.6.1",
+          "summary": "Partial information may be given initially; complete details may follow within 7 days.",
+          "app_rule": "The 72-hour step is the intimation only, not the full claim."
+        },
+        {
+          "clause": "21.5.5.6",
+          "summary": "Banks / government officials who receive an intimation must forward it to the insurer within 48 hours.",
+          "app_rule": "If intimation is lodged through a bank or official, track a 48-hour forwarding deadline."
+        }
+      ],
+      "intimation_channels": [
+        "Crop Insurance App",
+        "Krishi Rakshak Portal & Helpline (14447)"
+      ]
+    },
+    "dpdp_act_2023": {
+      "short_citation": "Digital Personal Data Protection Act, 2023 and Digital Personal Data Protection Rules, 2025",
+      "verification_status": "VERIFIED_PRIMARY",
+      "right_to_erasure": "Data Principals have the right to erasure and withdrawal of consent; data must be deleted once purpose is served.",
+      "delete_button_notice": "Your claim data will be deleted, subject to 48-hour notice and statutory retention of security logs for one year under the DPDP Rules, 2025.",
+      "log_retention_rule": "Rule 8(3), DPDP Rules, 2025 (released 14 November 2025): one-year minimum retention of logs for breach investigations.",
+      "forty_eight_hour_notice_rule": "Rule 8(2), DPDP Rules, 2025: 48-hour prior notice to the Data Principal before erasing personal data."
+    }
+  },
+  "satellite_method": {
+    "event_granule_file": "data/s1_event_granule_ghatal_sept2024.json",
+    "water_threshold_db": -18.0,
+    "uncertain_margin_db": 1.5,
+    "parameter_status": "Project-chosen parameters (not taken from a cited source). Report a sensitivity check (e.g. thresholds of -17/-18/-19 dB) alongside any result.",
+    "uncertain_pixel_rule": "Pixels within a conservative margin of the classification threshold are flagged as 'uncertain' and excluded from the certified flood-extent count."
+  },
+  "deadlines": {
+    "localized_calamity_intimation_hours": 72,
+    "complete_details_days": 7,
+    "bank_or_official_forwarding_hours": 48
+  },
+  "deadline_rules": {
+    "_note": "Deadline durations are applied only as PROVISIONAL until 'applicability_verified' is set to true by the project's legal reviewer after checking the current, authoritative scheme document for the claimant's actual policy.",
+    "PMFBY": {
+      "label": "PMFBY - localized calamity intimation",
+      "duration_hours": 72,
+      "source": "Revamped PMFBY Operational Guidelines, cl. 21.5.5.4 (as recorded by the project legal lead; edition date and page still OPEN)",
+      "applicability_verified": false,
+      "applicability_note": "Applies only if the claimant is insured under PMFBY for this crop and season. West Bengal has reportedly run its own state scheme (Bangla Shasya Bima) in place of PMFBY since 2019, so PMFBY applicability to a Ghatal claimant must be checked case by case."
+    },
+    "BSB": {
+      "label": "Bangla Shasya Bima (West Bengal state scheme)",
+      "duration_hours": null,
+      "source": null,
+      "applicability_verified": false,
+      "applicability_note": "No intimation rule has been configured for this scheme. Obtain the current scheme notification / insurer instructions before relying on any deadline."
+    },
+    "OTHER": {
+      "label": "Other insurance / compensation scheme",
+      "duration_hours": null,
+      "source": null,
+      "applicability_verified": false,
+      "applicability_note": "No rule configured."
+    },
+    "NOT_INSURED": {
+      "label": "Not insured",
+      "duration_hours": null,
+      "source": null,
+      "applicability_verified": false,
+      "applicability_note": "No insurance intimation deadline applies; other relief schemes may have their own timelines."
+    },
+    "UNKNOWN": {
+      "label": "Scheme not known",
+      "duration_hours": null,
+      "source": null,
+      "applicability_verified": false,
+      "applicability_note": "Identify the claimant's scheme first."
+    }
+  },
+  "software_audit_flags": {
+    "_note": "Added during the 2026-10-29 engineering audit. These are items the software team could NOT verify; they require review by a qualified legal professional against authoritative sources before the app is used for real claims.",
+    "items": [
+      {
+        "ref": "bsa_section_63_4.case_reference",
+        "flag": "REQUIRES_VERIFICATION",
+        "detail": "The Supreme Court decision recorded in this field (and described there as VERIFIED) could not be confirmed by the engineering audit, so it is no longer named in generated dossiers or the UI. Confirm the citation, date and holding against Supreme Court records before citing it."
+      },
+      {
+        "ref": "bsa_section_63_4.part_a_signatory",
+        "flag": "LEGAL_INTERPRETATION",
+        "detail": "Whether a PLV/field operator can sign Part A as the person in charge of the device/record on the farmer's behalf is a legal interpretation. The app no longer pre-fills any signatory."
+      },
+      {
+        "ref": "bsa_section_63_4.part_b_signatory",
+        "flag": "LEGAL_INTERPRETATION",
+        "detail": "Who qualifies as the 'expert' for Part B must be confirmed. The app no longer pre-fills any signatory."
+      },
+      {
+        "ref": "wblra_section_21b",
+        "flag": "APPLICATION_REQUIRES_REVIEW",
+        "detail": "The quoted presumption may apply only when its conditions are established. Selecting a tenancy option in the app never establishes bargadar status."
+      },
+      {
+        "ref": "pmfby_72h_trigger",
+        "flag": "APPLICABILITY_UNVERIFIED",
+        "detail": "Clause numbers recorded by the legal lead; edition/page still open; applicability in West Bengal (state scheme) unverified. Countdown is shown only as provisional."
+      },
+      {
+        "ref": "dpdp_act_2023.delete_button_notice",
+        "flag": "INACCURATE_FOR_THIS_APP",
+        "detail": "The original notice ('deleted, subject to 48-hour notice ... one year retention') did not match the code, which deleted instantly and retained nothing. The DPDP Rules provisions cited appear to concern specific classes of data fiduciaries and log retention; their application to this project needs review. The UI now describes what the software actually does."
+      }
+    ]
+  }
+}

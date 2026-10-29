@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, record_badge, verify_badge, analysis_badge, deadline_panel with context %}
+{% block title %}Review {{ case.case_id }}{% endblock %}
+{% block content %}
+{% set synthetic = case.record_type == 'synthetic_demo' %}
+{% if synthetic %}<div class="notice notice-synthetic">⚠ SYNTHETIC DEMONSTRATION — NOT REAL EVIDENCE. Every value in this case is fictional.</div>{% endif %}
+{% if case.status == 'ERASED' %}<div class="notice notice-info">Personal data was erased on {{ case.erased_at_utc }}. Only non-personal records remain.</div>
+{% elif case.erasure_requested_at_utc %}<div class="notice notice-danger">The claimant requested erasure on {{ case.erasure_requested_at_utc }}. An administrator should carry it out (see <a href="#erasure">Erasure</a>).</div>{% endif %}
+
+<p class="small"><a href="{{ url_for('reviewer_dashboard') }}">← All cases</a></p>
+<div class="panel-header">
+  <div>
+    <h1>Case <span class="case-id">{{ case.case_id }}</span></h1>
+    <div class="actions">{{ record_badge(case.record_type) }} {{ status_badge(case.status) }}
+      <span class="small muted">Created {{ case.created_at_utc }} · updated {{ case.updated_at_utc }}</span></div>
+  </div>
+</div>
+
+<div class="case-layout">
+<div>
+  <section class="panel" id="claimant">
+    <h2>Claimant <span class="tag-src">claimant-provided · not verified</span></h2>
+    <dl class="kv">
+      <dt>Name</dt><dd>{{ case.claimant_name or '—' }}</dd>
+      <dt>Father / spouse</dt><dd>{{ case.guardian_name or '—' }}</dd>
+      <dt>Phone</dt><dd>{{ case.phone or '—' }}</dd>
+      <dt>Assisted by</dt><dd>{{ case.assisted_by or '—' }}</dd>
+      <dt>Consent</dt><dd>{% if case.consent_given %}<span class="badge badge-green">✓ Given</span> {{ case.consent_at_utc }} <span class="small muted">({{ case.consent_version }})</span>
+          {% else %}<span class="badge badge-grey">Not applicable / not given</span>{% endif %}</dd>
+    </dl>
+  </section>
+
+  <section class="panel" id="location">
+    <h2>Field location</h2>
+    <dl class="kv">
+      <dt>Coordinates</dt><dd>{% if case.latitude is not none %}<span class="mono">{{ '%.6f'|format(case.latitude) }}, {{ '%.6f'|format(case.longitude) }}</span>{% else %}<span class="badge badge-amber">Not recorded</span>{% endif %}</dd>
+      <dt>Source</dt><dd>{{ case.location_source|label('location_source') }}{% if case.location_accuracy_m %} · ±{{ case.location_accuracy_m|round|int }} m reported{% endif %}</dd>
+      <dt>Village / mouza</dt><dd>{{ case.village or '—' }}</dd>
+      <dt>GP / block / district</dt><dd>{{ case.gram_panchayat or '—' }} / {{ case.block or '—' }} / {{ case.district or '—' }}</dd>
+      <dt>JL / khatian / dag</dt><dd>{{ case.jl_number or '—' }} / {{ case.khatian_no or '—' }} / {{ case.plot_dag_no or '—' }}</dd>
+    </dl>
+    <p class="small muted">Land-record numbers are as reported and have not been checked against official records.</p>
+  </section>
+
+  <section class="panel" id="damage">
+    <h2>Crop and reported damage <span class="tag-src">claimant-reported</span></h2>
+    <dl class="kv">
+      <dt>Crop / season</dt><dd>{{ case.crop or '—' }} / {{ case.season or '—' }}</dd>
+      <dt>Area</dt><dd>{{ (case.area_acres ~ ' acres') if case.area_acres else '—' }}</dd>
+      <dt>Incident start</dt><dd>{{ case.incident_date or '—' }} {{ case.incident_time or '(time not given)' }} IST</dd>
+      <dt>What happened</dt><dd>{{ case.damage_type|label('damage_type') }}</dd>
+      <dt>Description</dt><dd>{{ case.damage_description or '—' }}</dd>
+      <dt>Claimant's estimate</dt><dd>{{ ('%.0f'|format(case.reported_affected_pct) ~ '% of field') if case.reported_affected_pct is not none else '—' }}</dd>
+      <dt>Scheme</dt><dd>{{ case.insurance_scheme|label('scheme') }}</dd>
+      <dt>Insurer informed?</dt><dd>{{ case.intimation_status|label('intimation_status') }}{% if case.intimation_reference %} · ref {{ case.intimation_reference }}{% endif %}</dd>
+    </dl>
+  </section>
+
+  <section class="panel" id="tenancy">
+    <h2>Tenancy / cultivation</h2>
+    <dl class="kv">
+      <dt>Category</dt><dd>{{ case.tenancy_category|label('tenancy') }} <span class="tag-src">claimant-provided</span></dd>
+      <dt>Landowner</dt><dd>{{ case.landowner_name or '—' }}</dd>
+      <dt>Records described</dt><dd>{{ case.tenancy_documents or '—' }}</dd>
+      <dt>Review status</dt><dd><span class="badge badge-amber">{{ case.tenancy_review_status|label('tenancy_review') }}</span></dd>
+    </dl>
+    <p class="small muted">Selecting a category never establishes legal bargadar status. Section 21B's presumption, if it applies, depends on facts a competent authority must determine.</p>
+    {% if case.status != 'ERASED' %}
+    <form method="post" action="{{ url_for('reviewer_tenancy', case_id=case.case_id) }}" class="filters">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group"><label for="tenancy_review_status">Set review status</label>
+        <select id="tenancy_review_status" name="tenancy_review_status">
+          {% for s in tenancy_states %}<option value="{{ s }}" {% if s == case.tenancy_review_status %}selected{% endif %}>{{ s|label('tenancy_review') }}</option>{% endfor %}
+        </select></div>
+      <div class="form-group"><label for="tenancy_note">Note</label><input type="text" id="tenancy_note" name="note" maxlength="500"></div>
+      <button class="btn btn-secondary" type="submit">Save</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="panel" id="evidence">
+    <div class="panel-header">
+      <h2>Evidence ({{ evidence|length }})</h2>
+      {% if evidence %}
+      <form method="post" action="{{ url_for('reviewer_verify', case_id=case.case_id) }}" data-busy-text="Checking…">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-primary" type="submit">Re-check all SHA-256 hashes</button>
+      </form>
+      {% endif %}
+    </div>
+    <p class="small muted">A match shows the stored file is unchanged since upload. It does not establish source, capture time,
+      location or legal admissibility. Recorded hashes are never overwritten; each check is logged.</p>
+    {% if evidence %}
+    <div class="ev-grid">
+      {% for ev in evidence %}
+      <article class="ev-card {% if ev.is_synthetic %}synthetic{% endif %}">
+        {% if ev.status == 'active' and ev.mime_type in ('image/jpeg', 'image/png', 'image/webp') %}
+          <a href="{{ url_for('reviewer_evidence_file', evidence_id=ev.evidence_id) }}"><img class="thumb" loading="lazy"
+             src="{{ url_for('reviewer_evidence_file', evidence_id=ev.evidence_id) }}" alt="{{ ev.kind|label('evidence_kind') }} {{ ev.evidence_id }}"></a>
+        {% elif ev.status == 'active' %}
+          <a class="btn btn-secondary btn-small" href="{{ url_for('reviewer_evidence_file', evidence_id=ev.evidence_id) }}">Open {{ ev.mime_type }}</a>
+        {% endif %}
+        <div class="actions">{{ verify_badge(ev.last_verification_result if ev.status == 'active' else 'ERASED') }}
+          {% if ev.is_synthetic %}<span class="badge badge-red">SYNTHETIC</span>{% endif %}</div>
+        <dl class="kv">
+          <dt>ID</dt><dd class="mono">{{ ev.evidence_id }}</dd>
+          <dt>Type</dt><dd>{{ ev.kind|label('evidence_kind') }}</dd>
+          <dt>Source</dt><dd>{{ ev.provenance|label('provenance') }}</dd>
+          <dt>File</dt><dd>{{ ev.original_filename or '—' }} · {{ fmt_size(ev.size_bytes) }}</dd>
+          <dt>Uploaded</dt><dd>{{ ev.uploaded_at_utc }}</dd>
+          <dt>Photo time</dt><dd>{{ ev.embedded_capture_time or 'none' }} {% if ev.embedded_capture_time %}<span class="tag-src">embedded · unverified</span>{% endif %}</dd>
+          {% if ev.embedded_gps_lat is not none %}<dt>Photo GPS</dt><dd>{{ ev.embedded_gps_lat }}, {{ ev.embedded_gps_lon }} <span class="tag-src">embedded · unverified</span></dd>{% endif %}
+          <dt>Transfer</dt><dd>{% if ev.client_hash_match == 1 %}✓ matches phone's hash{% elif ev.client_hash_match == 0 %}<span class="badge badge-red">✗ differs from phone's hash</span>{% else %}No phone hash{% endif %}</dd>
+        </dl>
+        <p class="hash">{{ ev.sha256 }}</p>
+        {% if verifications[ev.evidence_id] %}
+        <details class="more"><summary>Check history ({{ verifications[ev.evidence_id]|length }})</summary>
+          <ul class="plain small">{% for v in verifications[ev.evidence_id] %}<li>{{ v.checked_at_utc }} — {{ v.result }} — {{ v.actor_id }}</li>{% endfor %}</ul>
+        </details>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty">No evidence files have been uploaded.</div>{% endif %}
+  </section>
+
+  <section class="panel" id="satellite">
+    <div class="panel-header">
+      <h2>Satellite observations</h2>
+      {% if case.status != 'ERASED' %}
+      <form method="post" action="{{ url_for('reviewer_satellite', case_id=case.case_id) }}" data-busy-text="Querying Earth Engine…">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-primary" type="submit">{{ 'Generate SYNTHETIC analysis' if synthetic else 'Run satellite analysis' }}</button>
+      </form>
+      {% endif %}
+    </div>
+    {% if not synthetic and not ee_state.ready %}<div class="notice notice-warn">{{ ee_state.message }}</div>{% endif %}
+    {% if not synthetic and case.latitude is none %}<div class="notice notice-warn">This case has no coordinates, so satellite analysis cannot run.</div>{% endif %}
+    {% for an in analyses|reverse %}{% set r = an.record %}
+      <div class="card stack">
+        <div class="actions actions-between"><strong class="mono">{{ an.analysis_id }}</strong>{{ analysis_badge(r.status) }}</div>
+        <p class="small muted">Requested {{ an.requested_at_utc }} by {{ an.requested_by }} · {{ r.provenance|label('provenance') }} · {{ r.analysis_version }}</p>
+        <p class="small">{{ r.message }}</p>
+        {% for key, name in (('sentinel1', 'Sentinel-1 SAR (VV)'), ('sentinel2', 'Sentinel-2 NDVI')) %}{% set s = r.get(key) %}
+          {% if s %}
+          <details class="more" {% if loop.first %}open{% endif %}><summary>{{ name }} — {{ s.status }}</summary>
+            <dl class="kv small">
+              {% if s.synthetic_note %}<dt>SYNTHETIC</dt><dd><span class="badge badge-red">{{ s.synthetic_note }}</span></dd>{% endif %}
+              <dt>Dataset</dt><dd>{{ s.dataset or '—' }}</dd>
+              {% if s.message %}<dt>Note</dt><dd>{{ s.message }}</dd>{% endif %}
+              {% if s.post_image %}<dt>Post image</dt><dd class="mono">{{ s.post_image.id }}<br>{{ s.post_image.acquired_utc }} · {{ s.post_image.orbit_pass }} · orbit {{ s.post_image.relative_orbit }}</dd>{% endif %}
+              {% if s.baseline_window %}<dt>Baseline</dt><dd>{{ s.baseline_window|join(' → ') }} · {{ (s.baseline_images or [])|length }} same-orbit image(s)</dd>{% endif %}
+              {% if s.post_mean_vv_db is not none %}<dt>Mean VV</dt><dd>post {{ s.post_mean_vv_db }} dB{% if s.baseline_mean_vv_db is not none %} · baseline {{ s.baseline_mean_vv_db }} dB{% endif %}{% if s.change_db is not none %} · change {{ s.change_db }} dB{% endif %}</dd>{% endif %}
+              {% for x in s.sensitivity or [] %}<dt>At {{ x.threshold_db }} dB</dt><dd>{{ x.new_low_backscatter_pct }}% newly low-backscatter · {{ x.uncertain_pct }}% uncertain</dd>{% endfor %}
+              {% set fmod = s.flood_model %}{% if fmod %}
+                {% if fmod.status == 'completed' %}
+                <dt>Flood model</dt><dd>{{ fmod.fractions_pct.flood }}% flood · {{ fmod.fractions_pct.uncertain }}% uncertain · {{ fmod.fractions_pct.permanent_water }}% permanent water · {{ fmod.fractions_pct.excluded }}% excluded (terrain)<br><span class="muted">{{ fmod.version }} · {{ fmod.method_note }}</span></dd>
+                <dt>Model accuracy</dt><dd>{% if fmod.calibration %}Held-out F1 {{ fmod.calibration.test_f1_flood }}, overall accuracy {{ fmod.calibration.test_overall_accuracy }}, coverage {{ fmod.calibration.test_coverage }} on {{ fmod.calibration.test_samples }} samples <span class="tag-src">vs {{ fmod.calibration.reference }}</span>{% else %}Not calibrated — default parameters, accuracy unmeasured{% endif %}</dd>
+                {% else %}<dt>Flood model</dt><dd>{{ fmod.status }}: {{ fmod.message }}</dd>{% endif %}
+              {% endif %}
+              {% for part in ('pre', 'post') %}{% if s.get(part) %}<dt>{{ part|title }} window</dt><dd>{{ (s.get(part ~ '_window') or [])|join(' → ') }} · {{ (s[part].images or [])|length }} image(s) · NDVI {{ s[part].mean_ndvi if s[part].mean_ndvi is not none else '—' }} · cloud-free {{ s[part].cloud_free_fraction_pct if s[part].cloud_free_fraction_pct is not none else '—' }}%</dd>{% endif %}{% endfor %}
+              {% if s.ndvi_change is not none %}<dt>NDVI change</dt><dd>{{ s.ndvi_change }} <span class="tag-src">vegetation indicator, not crop loss</span></dd>{% endif %}
+            </dl>
+          </details>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">No satellite analysis has been run.</div>
+    {% endfor %}
+    <p class="small muted">Thresholds are project-chosen indicators that need local validation. See <a href="{{ url_for('about') }}">limitations</a>.</p>
+  </section>
+
+  <section class="panel" id="documents">
+    <div class="panel-header">
+      <h2>Dossier documents</h2>
+      {% if case.status != 'ERASED' %}
+      <form method="post" action="{{ url_for('reviewer_dossier', case_id=case.case_id) }}" data-busy-text="Generating PDF…">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-primary" type="submit">Generate new dossier version</button>
+      </form>
+      {% endif %}
+    </div>
+    {% if documents %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Version</th><th>Generated</th><th>SHA-256 (recorded)</th><th>Actions</th></tr></thead>
+      <tbody>{% for d in documents %}
+        <tr><td>v{{ d.version }}{% if d.is_synthetic %}<br><span class="badge badge-red">SYNTHETIC</span>{% endif %}<br><span class="small muted mono">{{ d.doc_id }}</span></td>
+          <td class="small">{{ d.generated_at_utc }}<br>by {{ d.generated_by }}<br>{{ d.generator_version }}</td>
+          <td class="hash">{{ d.sha256 }}</td>
+          <td>{% if d.status == 'active' %}<div class="actions">
+            <a class="btn btn-small btn-secondary" href="{{ url_for('reviewer_document', doc_id=d.doc_id) }}">⬇ Download</a>
+            <form method="post" action="{{ url_for('reviewer_document_verify', doc_id=d.doc_id) }}" class="inline-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-small btn-secondary" type="submit">Check stored file</button></form></div>
+            {% else %}<span class="badge badge-grey">Erased</span>{% endif %}</td></tr>
+      {% endfor %}</tbody></table></div>
+    {% else %}<div class="empty">No dossier generated yet.</div>{% endif %}
+    <p class="small muted">The dossier's certificate section is a preparation checklist with blank signatory fields. It is never a completed certificate.</p>
+  </section>
+
+  <section class="panel" id="history">
+    <h2>Audit trail for this case</h2>
+    <ol class="timeline">
+      {% for a in audit %}
+      <li><strong>{{ a.action }}</strong>{% if a.new_status %} · {{ a.prev_status or '—' }} → {{ a.new_status }}{% endif %}
+        <div class="small muted">{{ a.timestamp_utc }} · {{ a.actor_type }}: {{ a.actor_id }}</div>
+        {% if a.note %}<div class="small">{{ a.note }}</div>{% endif %}</li>
+      {% else %}<li>No events.</li>{% endfor %}
+    </ol>
+  </section>
+</div>
+
+<aside class="stack">
+  <section class="panel">{{ deadline_panel(deadline, server_now_ms) }}</section>
+
+  <section class="panel" id="gaps">
+    <h2>Missing / incomplete ({{ gaps|length }})</h2>
+    {% if gaps %}<ul class="bullets small">{% for g in gaps %}<li>{{ g }}</li>{% endfor %}</ul>
+    {% else %}<p class="small">No gaps found by the automatic checklist. Review the content itself.</p>{% endif %}
+  </section>
+
+  <section class="panel" id="decision">
+    <h2>Review decision</h2>
+    {% if transitions %}
+    <form method="post" action="{{ url_for('reviewer_status', case_id=case.case_id) }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group"><label for="new_status">Move case to</label>
+        <select id="new_status" name="new_status" required>
+          {% for t in transitions %}<option value="{{ t }}">{{ t|label('status') }}</option>{% endfor %}
+        </select></div>
+      <div class="form-group"><label for="note">Reason / note <span class="opt">the claimant can see this</span></label>
+        <textarea id="note" name="note" maxlength="1000"></textarea>
+        <div class="hint">Required when requesting information, referring, or closing.</div></div>
+      <button class="btn btn-primary btn-block" type="submit">Record decision</button>
+    </form>
+    <p class="small muted">"Dossier ready" means the evidence file is ready for the claimant to submit through the official channel. It is not a claim approval.</p>
+    {% else %}<p class="small">No further status changes are possible.</p>{% endif %}
+  </section>
+
+  <nav class="panel section-nav" aria-label="Sections">
+    <a href="#claimant">Claimant</a><a href="#location">Location</a><a href="#damage">Crop &amp; damage</a>
+    <a href="#tenancy">Tenancy</a><a href="#evidence">Evidence</a><a href="#satellite">Satellite</a>
+    <a href="#documents">Dossier</a><a href="#history">Audit trail</a><a href="#erasure">Erasure</a>
+  </nav>
+
+  <section class="panel" id="erasure">
+    <h2>Erasure</h2>
+    {% if case.status == 'ERASED' %}<p class="small">Completed {{ case.erased_at_utc }}.</p>
+    {% elif reviewer.role == 'admin' %}
+    <form method="post" action="{{ url_for('reviewer_erase', case_id=case.case_id) }}" class="stack"
+          data-confirm="Permanently delete this case's personal data and files?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <p class="small">Deletes personal fields, coordinates, uploaded files and generated PDFs. Hashes and audit events are kept.</p>
+      <div class="form-group"><label for="confirm_case_id">Type <span class="mono">{{ case.case_id }}</span> to confirm</label>
+        <input type="text" id="confirm_case_id" name="confirm_case_id" autocomplete="off" required></div>
+      <button class="btn btn-danger btn-block" type="submit">Erase personal data</button>
+    </form>
+    {% else %}<p class="small muted">Only an administrator can carry out erasure.</p>{% endif %}
+  </section>
+</aside>
+</div>
+{% endblock %}

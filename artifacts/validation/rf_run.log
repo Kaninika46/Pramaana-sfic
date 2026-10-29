@@ -1,0 +1,49 @@
+Finding Sentinel-1 / cloud-free Sentinel-2 pairs...
+  2019-06-01..2019-11-30: 41 Sentinel-1 passes, 24 Sentinel-2 days (<70% cloud)
+  2020-06-01..2020-11-30: 46 Sentinel-1 passes, 18 Sentinel-2 days (<70% cloud)
+  2021-06-01..2021-11-30: 44 Sentinel-1 passes, 20 Sentinel-2 days (<70% cloud)
+  2022-06-01..2022-11-30: 43 Sentinel-1 passes, 23 Sentinel-2 days (<70% cloud)
+  2023-06-01..2023-11-30: 45 Sentinel-1 passes, 21 Sentinel-2 days (<70% cloud)
+  2024-06-01..2024-11-30: 44 Sentinel-1 passes, 16 Sentinel-2 days (<70% cloud)
+    pair 0: S1 2019-11-21 / S2 2019-11-21: 1000 water, 1000 dry
+    pair 1: S1 2021-11-25 / S2 2021-11-25: 1000 water, 1000 dry
+    pair 2: S1 2023-09-01 / S2 2023-09-01: 1000 water, 1000 dry
+    pair 3: S1 2022-11-10 / S2 2022-11-10: 31 water, 1000 dry
+    pair 4: S1 2020-11-15 / S2 2020-11-15: 1000 water, 1000 dry
+    pair 5: S1 2023-10-31 / S2 2023-10-31: 463 water, 1000 dry
+    pair 6: S1 2021-11-10 / S2 2021-11-10: 187 water, 1000 dry
+    pair 7: S1 2022-11-05 / S2 2022-11-05: 924 water, 1000 dry
+    pair 8: S1 2024-11-09 / S2 2024-11-09: 354 water, 1000 dry
+    pair 9: S1 2023-11-05 / S2 2023-11-05: 1000 water, 1000 dry
+    pair 10: S1 2020-06-03 / S2 2020-06-03: 1000 water, 1000 dry
+    pair 11: S1 2022-11-20 / S2 2022-11-20: 1000 water, 1000 dry
+    pair 12: S1 2022-07-13 / S2 2022-07-13: 1000 water, 1000 dry
+    pair 13: S1 2024-10-30 / S2 2024-10-30: 1000 water, 1000 dry
+    pair 14: S1 2019-09-22 / S2 2019-09-22: 1000 water, 1000 dry
+    pair 15: S1 2023-07-18 / S2 2023-07-18: 1000 water, 1000 dry
+    pair 16: S1 2021-07-13 / S2 2021-07-13: 1000 water, 1000 dry
+    pair 17: S1 2023-09-16 / S2 2023-09-16: 1000 water, 1000 dry
+    pair 18: S1 2020-11-20 / S2 2020-11-20: 1000 water, 1000 dry
+    pair 19: S1 2023-11-24 / S2 2023-11-25: 1000 water, 1000 dry
+    pair 20: S1 2024-11-18 / S2 2024-11-19: 32 water, 1000 dry
+    pair 21: S1 2023-06-02 / S2 2023-06-03: 829 water, 1000 dry
+    pair 22: S1 2020-10-25 / S2 2020-10-26: 340 water, 1000 dry
+    pair 23: S1 2020-10-27 / S2 2020-10-26: 157 water, 1000 dry
+Saved samples to artifacts\validation\rf_samples_latest.json (reuse with --rows)
+Split check: 0 of 42317 samples disagree between server and client.
+Training random forest (40 trees) on 22481 calibration samples...
+
+== Held-out test: OPEN WATER vs dry ==
+Model                           cover     OA   prec recall     F1  kappa
+Legacy rule (-18 dB fixed)      0.957  0.798  1.000  0.093  0.170  0.137
+v0.3 rule, calibrated (VV)      0.852  0.835  0.825  0.420  0.556  0.468
+Random forest (VV+VH)           0.904  0.918  0.853  0.811  0.832  0.777
+
+== Held-out test: ALL NEW WATER (incl. flooded crops) vs dry ==
+Model                           cover     OA   prec recall     F1  kappa
+Legacy rule (-18 dB fixed)      0.960  0.647  1.000  0.045  0.087  0.056
+v0.3 rule, calibrated (VV)      0.838  0.723  0.867  0.314  0.461  0.326
+Random forest (VV+VH)           0.892  0.843  0.898  0.664  0.764  0.650
+
+RF margin 0.1; feature importance: {'hand': 15.803209195105165, 'jrc': 12.921383412886115, 'slope': 13.692639093221151, 'vh_base': 18.34528025685583, 'vh_change': 17.949054362946615, 'vh_post': 25.099539155714318, 'vv_base': 23.66978090593117, 'vv_change': 21.672892120110227, 'vv_post': 28.00503418050191}
+Saved artifacts\validation\flood_rf_20261029T163636Z.json

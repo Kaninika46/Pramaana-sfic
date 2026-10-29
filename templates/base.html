@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Pramaana{% endblock %} — Pramaana (প্রমাণ)</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='pramaana.css') }}">
+  <script src="{{ url_for('static', filename='pramaana.js') }}" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="{{ url_for('index') }}">
+      <div class="brand-title">PRAMAANA <span class="bn">(প্রমাণ)</span></div>
+      <div class="brand-sub">AI-assisted agricultural flood evidence &amp; claim-preparation system</div>
+    </a>
+    <nav class="nav" aria-label="Main">
+      {% set ep = request.endpoint or '' %}
+      <a href="{{ url_for('report') }}" {% if ep == 'report' %}aria-current="page"{% endif %}>Report a loss</a>
+      <a href="{{ url_for('track') }}" {% if ep.startswith('track') %}aria-current="page"{% endif %}>Track a case</a>
+      <a href="{{ url_for('verify_file') }}" {% if ep == 'verify_file' %}aria-current="page"{% endif %}>Verify a file</a>
+      <a href="{{ url_for('about') }}" {% if ep == 'about' %}aria-current="page"{% endif %}>About &amp; limits</a>
+      {% if reviewer %}
+        <a href="{{ url_for('reviewer_dashboard') }}" {% if ep.startswith('reviewer') %}aria-current="page"{% endif %}>Reviewer</a>
+        <form method="post" action="{{ url_for('reviewer_logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit">Sign out ({{ reviewer.username }})</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('reviewer_login') }}" {% if ep == 'reviewer_login' %}aria-current="page"{% endif %}>Reviewer sign-in</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+<main id="main" class="{% block main_class %}{% endblock %}">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="notice notice-{{ {'error':'danger','success':'success','info':'info'}.get(cat, 'info') }}" role="{{ 'alert' if cat == 'error' else 'status' }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+  Pramaana v{{ app_version }} — a student public-interest technology prototype. Not a government, insurer, court
+  or legal-aid service. It does not file claims or make decisions. <a href="{{ url_for('about') }}">Limitations</a>
+</footer>
+</body>
+</html>

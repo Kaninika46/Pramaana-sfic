@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Reviewer sign-in{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<section class="panel">
+  <h1>Reviewer sign-in</h1>
+  <p class="muted">For members of the Pramaana project's internal review workflow.</p>
+  {% if no_reviewers %}
+  <div class="notice notice-warn"><strong>No reviewer accounts exist yet.</strong> An administrator must create one on the
+    server: <code>flask --app app create-reviewer &lt;username&gt; --role admin</code></div>
+  {% endif %}
+  {% if error %}<div class="notice notice-danger" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('reviewer_login', next=request.args.get('next')) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group"><label for="username">Username</label>
+      <input type="text" id="username" name="username" required autocomplete="username" autocapitalize="none"></div>
+    <div class="form-group"><label for="password">Password</label>
+      <input type="password" id="password" name="password" required autocomplete="current-password"></div>
+    <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+  </form>
+</section>
+{% endblock %}

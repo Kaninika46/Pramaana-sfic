@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<p class="small"><a href="{{ url_for('reviewer_dashboard') }}">← Dashboard</a></p>
+<h1>Audit log</h1>
+<div class="notice {{ 'notice-success' if chain.intact else 'notice-danger' }}" role="status">
+  {% if chain.intact %}<strong>✓ Hash chain intact</strong> across {{ chain.events }} event(s).
+  {% else %}<strong>✗ Hash chain broken at event #{{ chain.broken_at_seq }}.</strong> A stored event was altered or removed.{% endif %}
+</div>
+<p class="small muted">Each event stores a SHA-256 hash of its contents and of the previous event, and the database rejects
+  UPDATE and DELETE on this table. This makes edits <em>detectable</em>; it is not immutable storage — someone with
+  direct access to the database file could rewrite the whole chain. Timestamps come from the server clock (UTC).</p>
+
+<div class="table-wrap"><table>
+  <thead><tr><th>#</th><th>UTC time</th><th>Case</th><th>Action</th><th>Actor</th><th>Note</th></tr></thead>
+  <tbody>{% for e in events|reverse %}
+    <tr><td>{{ e.seq }}</td><td class="small nowrap">{{ e.timestamp_utc }}</td>
+      <td>{% if e.case_id %}<a class="case-id" href="{{ url_for('reviewer_case', case_id=e.case_id) }}">{{ e.case_id }}</a>{% else %}—{% endif %}</td>
+      <td>{{ e.action }}{% if e.new_status %}<br><span class="small muted">{{ e.prev_status or '—' }} → {{ e.new_status }}</span>{% endif %}</td>
+      <td class="small">{{ e.actor_type }}: {{ e.actor_id }}</td>
+      <td class="small">{{ e.note or '' }}</td></tr>
+  {% else %}<tr><td colspan="6" class="muted">No events yet.</td></tr>{% endfor %}</tbody>
+</table></div>
+
+<section class="panel" id="legacy">
+  <h2>Legacy records (pre-upgrade)</h2>
+  <p class="small muted">Kept unchanged from the original <code>reviewer_audit_log</code> table. The original app kept cases only in
+    memory and seeded fictional demo cases at startup; entry #1 was <strong>written automatically by the seeding code</strong>, not by a
+    real reviewer. These rows are not hash-chained.</p>
+  {% if legacy %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Claim</th><th>Action</th><th>Recorded actor</th><th>Note</th><th>Time</th></tr></thead>
+    <tbody>{% for r in legacy %}<tr><td>{{ r.id }}</td><td>{{ r.claim_id }}</td><td>{{ r.action }}</td><td>{{ r.reviewer }}</td><td class="small">{{ r.note }}</td><td class="small">{{ r.timestamp_utc }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="muted">None.</p>{% endif %}
+</section>
+{% endblock %}

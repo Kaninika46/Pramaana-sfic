@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% from "_macros.html" import input, select, label_for, error_for with context %}
+{% block title %}Report a loss{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Report suspected flood damage</h1>
+<p class="muted">Fields marked <span class="req">*</span> are required. Everything else is optional — leave it
+  empty if you are not sure. Please do not enter Aadhaar or bank numbers.</p>
+
+{% if errors or file_errors %}
+<div class="notice notice-danger" role="alert" tabindex="-1">
+  <strong>Please fix the following before submitting:</strong>
+  <ul class="bullets">
+    {% for k, v in errors.items() %}<li><a href="#{{ k }}">{{ F[k][0] if k in F else k|replace('_',' ')|capitalize }}</a>: {{ v }}</li>{% endfor %}
+    {% for e in file_errors %}<li>{{ e }}</li>{% endfor %}
+  </ul>
+  <p class="small">For your safety, files are never kept from a rejected form — please choose your photos again.</p>
+</div>
+{% endif %}
+
+<ol class="stepper js-only" aria-label="Progress">
+  <li>1. You</li><li>2. Field</li><li>3. Crop &amp; damage</li><li>4. Photos</li><li>5. Check &amp; consent</li>
+</ol>
+
+<form method="post" action="{{ url_for('report') }}" enctype="multipart/form-data" novalidate
+      data-stepper data-hash-files data-draft-key="report" data-has-values="{{ '1' if values else '0' }}"
+      data-max-bytes="{{ 10 * 1024 * 1024 }}" data-busy-text="Submitting… please wait">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="submission_id" value="{{ submission_id }}">
+  <input type="hidden" name="client_hashes" value="">
+
+  <fieldset class="step panel">
+    <legend>Step 1 — About this report</legend>
+    <p class="step-intro">Who is reporting the loss?</p>
+    <div class="form-group">
+      <span class="label">What kind of record is this? <span class="req">*</span></span>
+      <div class="radio-cards">
+        <label><input type="radio" name="record_type" value="real" data-summary-label="Record type"
+          {% if values.get('record_type', 'real') == 'real' %}checked{% endif %}>
+          <span><strong>A real loss</strong><br><span class="small muted">A farmer's actual report.</span></span></label>
+        <label><input type="radio" name="record_type" value="field_test" data-summary-label="Record type"
+          {% if values.get('record_type') == 'field_test' %}checked{% endif %}>
+          <span><strong>Field test of this app</strong><br><span class="small muted">Trying the software with a volunteer. Not for submission.</span></span></label>
+      </div>
+    </div>
+    {{ input('claimant_name', values, errors, required=True, attrs='autocomplete="name" maxlength="120"') }}
+    {{ input('guardian_name', values, errors, attrs='maxlength="120"') }}
+    {{ input('phone', values, errors, type='tel', hint='So a reviewer can call back. Optional.', attrs='inputmode="numeric" autocomplete="tel" maxlength="20"') }}
+    {{ input('assisted_by', values, errors, hint='If someone is helping fill in this form.', attrs='maxlength="120"') }}
+    <div class="step-nav js-only"><span></span><button class="btn btn-primary" data-step-next>Next: the field →</button></div>
+  </fieldset>
+
+  <fieldset class="step panel">
+    <legend>Step 2 — The affected field</legend>
+    <p class="step-intro">Where is the damaged field? Land-record numbers help, but are optional.</p>
+    {{ input('village', values, errors, required=True, attrs='maxlength="120"') }}
+    <div class="form-row-3">
+      {{ input('gram_panchayat', values, errors) }}
+      {{ input('block', values, errors) }}
+      {{ input('district', values, errors) }}
+    </div>
+    <div class="form-row-3">
+      {{ input('jl_number', values, errors, attrs='maxlength="40"') }}
+      {{ input('khatian_no', values, errors, attrs='maxlength="40"') }}
+      {{ input('plot_dag_no', values, errors, attrs='maxlength="40"') }}
+    </div>
+
+    <div class="card form-group{% if errors.get('latitude') %} has-error{% endif %}">
+      <h3>Field location <span class="opt">optional, but needed for satellite checks</span></h3>
+      <p class="small muted">Stand in or beside the affected field, then press the button. The phone's GPS
+        accuracy is saved too. You can also type the numbers.</p>
+      <button type="button" class="btn btn-secondary" data-gps-button hidden>📍 Use this phone's location <span class="bn">(লোকেশন নিন)</span></button>
+      <div id="gps-status" class="gps-status" role="status" aria-live="polite"></div>
+      <input type="hidden" id="location_source" name="location_source" value="{{ values.get('location_source', 'manual') }}">
+      <input type="hidden" id="location_accuracy_m" name="location_accuracy_m" value="{{ values.get('location_accuracy_m', '') }}">
+      <div class="form-row">
+        {{ input('latitude', values, {}, type='text', attrs='inputmode="decimal" placeholder="e.g. 22.66"') }}
+        {{ input('longitude', values, {}, type='text', attrs='inputmode="decimal" placeholder="e.g. 87.72"') }}
+      </div>
+      {{ error_for('latitude', errors) }}
+    </div>
+
+    <h3>How do you cultivate this land?</h3>
+    {{ select('tenancy_category', values, errors, L.tenancy, default='unsure',
+              hint='This is recorded as what you tell us. Pramaana does not decide anyone\'s legal tenancy status.') }}
+    {{ input('landowner_name', values, errors, attrs='maxlength="120"') }}
+    {{ input('tenancy_documents', values, errors, hint='Describe any records you have. You can upload them in step 4.', attrs='maxlength="500"') }}
+    <div class="step-nav js-only"><button class="btn btn-secondary" data-step-back>← Back</button><button class="btn btn-primary" data-step-next>Next: crop &amp; damage →</button></div>
+  </fieldset>
+
+  <fieldset class="step panel">
+    <legend>Step 3 — Crop and damage</legend>
+    <p class="step-intro">Tell us what was growing and what happened, in your own words.</p>
+    <div class="form-row-3">
+      {{ input('crop', values, errors, required=True, attrs='maxlength="80" placeholder="e.g. Aman paddy"') }}
+      {{ input('season', values, errors, attrs='maxlength="40" placeholder="e.g. Kharif 2026"') }}
+      {{ input('area_acres', values, errors, type='text', attrs='inputmode="decimal"') }}
+    </div>
+    <div class="form-row">
+      {{ input('incident_date', values, errors, type='date', required=True) }}
+      {{ input('incident_time', values, errors, type='time', hint='Leave empty if you do not know.') }}
+    </div>
+    <div class="form-group{% if errors.get('damage_type') %} has-error{% endif %}">
+      <span class="label">{{ F.damage_type[0] }} <span class="req">*</span></span>
+      <div class="radio-cards">
+        {% for key, text in L.damage_type.items() %}
+          <label><input type="radio" name="damage_type" value="{{ key }}" data-summary-label="Damage type" required
+            {% if values.get('damage_type') == key %}checked{% endif %}> <span>{{ text }}</span></label>
+        {% endfor %}
+      </div>
+      {{ error_for('damage_type', errors) }}
+    </div>
+    <div class="form-group{% if errors.get('damage_description') %} has-error{% endif %}">
+      {{ label_for('damage_description', True) }}
+      <textarea id="damage_description" name="damage_description" required maxlength="2000" data-summary-label="Damage description"
+        placeholder="For example: water entered the field on the night of …, plants are lying flat, water is still knee-deep…">{{ values.get('damage_description', '') }}</textarea>
+      {{ error_for('damage_description', errors) }}
+    </div>
+    {{ input('reported_affected_pct', values, errors, type='text', hint='Your own estimate. It is recorded as your estimate, not a measurement.', attrs='inputmode="numeric"') }}
+    {{ select('insurance_scheme', values, errors, L.scheme, default='UNKNOWN') }}
+    {{ select('intimation_status', values, errors, L.intimation_status, default='unknown') }}
+    {{ input('intimation_reference', values, errors, attrs='maxlength="80"') }}
+    <div class="step-nav js-only"><button class="btn btn-secondary" data-step-back>← Back</button><button class="btn btn-primary" data-step-next>Next: photos →</button></div>
+  </fieldset>
+
+  <fieldset class="step panel">
+    <legend>Step 4 — Photos and documents</legend>
+    <p class="step-intro">Take clear photos of the damaged field, including a wide photo showing landmarks.
+      Files are stored exactly as uploaded. Up to 10 files, 10 MB each.</p>
+    <div class="form-group">
+      <label for="photos">{{ F.photos[0] }} <span class="bn">({{ F.photos[1] }})</span> <span class="opt">JPEG, PNG, WebP, HEIC</span></label>
+      <input type="file" id="photos" name="photos" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" multiple data-summary-label="Photos">
+      <ul class="file-list" id="photos-list" aria-live="polite"></ul>
+    </div>
+    <div class="form-group">
+      <label for="documents">{{ F.documents[0] }} <span class="opt">PDF or photo</span></label>
+      <input type="file" id="documents" name="documents" accept="application/pdf,image/jpeg,image/png" multiple data-summary-label="Documents">
+      <ul class="file-list" id="documents-list" aria-live="polite"></ul>
+    </div>
+    <div class="form-group">
+      <label for="voice">{{ F.voice[0] }} <span class="bn">({{ F.voice[1] }})</span></label>
+      <input type="file" id="voice" name="voice" accept="audio/*" data-summary-label="Voice note">
+      <ul class="file-list" id="voice-list" aria-live="polite"></ul>
+    </div>
+    <p class="hint">Each file gets a SHA-256 fingerprint on this phone and again on the server. Matching
+      fingerprints show the file arrived unchanged. They do not prove when or where a photo was taken.</p>
+    <div class="step-nav js-only"><button class="btn btn-secondary" data-step-back>← Back</button><button class="btn btn-primary" data-step-next>Next: check &amp; consent →</button></div>
+  </fieldset>
+
+  <fieldset class="step panel" data-summary>
+    <legend>Step 5 — Check and give consent</legend>
+    <div class="js-only review-summary">
+      <h3>Your answers</h3>
+      <div id="review-summary"></div>
+      <p class="small"><a href="#" data-step-goto="0">Change something</a></p>
+    </div>
+    <div class="consent-box form-group{% if errors.get('consent') %} has-error{% endif %}">
+      <h3>Consent <span class="bn">(সম্মতি)</span></h3>
+      <ul>{% for line in consent_text %}<li>{{ line }}</li>{% endfor %}</ul>
+      <p class="small muted">The field operator should explain this in Bengali. A reviewed Bengali text is not yet available.</p>
+      <label class="check" for="consent">
+        <input type="checkbox" id="consent" name="consent" value="yes" required {% if errors.get('consent') %}aria-invalid="true"{% endif %}>
+        <span>I understand the above and agree that this information and these files may be stored and used to prepare my case.</span>
+      </label>
+      {{ error_for('consent', errors) }}
+    </div>
+    <p class="small muted" id="draft-status" role="status"></p>
+    <div class="step-nav">
+      <span class="actions"><button class="btn btn-secondary js-only-inline" data-step-back>← Back</button>
+        <button type="button" class="btn btn-secondary js-only-inline" id="draft-clear">Clear draft</button></span>
+      <button type="submit" class="btn btn-primary">Submit report <span class="bn">(জমা দিন)</span></button>
+    </div>
+  </fieldset>
+</form>
+{% endblock %}

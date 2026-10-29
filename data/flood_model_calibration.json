@@ -1,0 +1,32 @@
+{
+  "params": {
+    "threshold_mode": "otsu",
+    "default_threshold_db": -12.0,
+    "margin_db": 0.5,
+    "change_db": 2.0,
+    "otsu_min_db": -23.0,
+    "otsu_max_db": -14.0,
+    "otsu_min_separation_db": 3.0,
+    "otsu_min_class_fraction": 0.02,
+    "threshold_region_m": 5000,
+    "permanent_water_occurrence": 80,
+    "max_hand_m": 15.0,
+    "max_slope_deg": 5.0
+  },
+  "model_version": "pramaana-flood-0.3.0",
+  "calibrated_utc": "2026-10-29T16:03:56Z",
+  "validation_report": "artifacts/validation/flood_validation_20261029T160356Z.json",
+  "reference": "Sentinel-2 open-water MNDWI proxy (not field survey)",
+  "region": {
+    "lat": 22.6654,
+    "lon": 87.7218,
+    "radius_m": 15000
+  },
+  "pairs": 24,
+  "test_samples": 14513,
+  "test_coverage": 0.8629,
+  "test_overall_accuracy": 0.8166,
+  "test_f1_flood": 0.5565,
+  "test_kappa": 0.4583,
+  "test_f1_flood_including_vegetated_water": 0.455
+}

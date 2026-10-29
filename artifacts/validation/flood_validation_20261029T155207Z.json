@@ -1,0 +1,593 @@
+{
+  "generated_utc": "2026-10-29T15:52:07Z",
+  "model_version": "pramaana-flood-0.3.0",
+  "region": {
+    "lat": 22.6654,
+    "lon": 87.7218,
+    "radius_m": 15000
+  },
+  "reference": {
+    "source": "COPERNICUS/S2_SR_HARMONIZED MNDWI (B3, B11), SCL 4/5/6 and cloud prob < 20%",
+    "water_mndwi_min": 0.1,
+    "dry_mndwi_max": -0.15,
+    "new_water_requires_jrc_occurrence_below": 25,
+    "max_gap_days": 1.0
+  },
+  "split": "spatial blocks of 0.02 degrees (~2 km); calibration and test never share a block",
+  "pairs": [
+    {
+      "s1_day": "2019-11-21",
+      "s1_time_ms": 1574338351000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2019-11-21",
+      "gap_days": 0,
+      "s2_clear_frac": 1.0,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.2 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2021-11-25",
+      "s1_time_ms": 1637798671000,
+      "orbit": 48,
+      "pass": "DESCENDING",
+      "s2_day": "2021-11-25",
+      "gap_days": 0,
+      "s2_clear_frac": 1.0,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.2 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 10,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2023-09-01",
+      "s1_time_ms": 1693570373000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2023-09-01",
+      "gap_days": 0,
+      "s2_clear_frac": 1.0,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.6 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2022-11-10",
+      "s1_time_ms": 1668082855000,
+      "orbit": 85,
+      "pass": "ASCENDING",
+      "s2_day": "2022-11-10",
+      "gap_days": 0,
+      "s2_clear_frac": 0.993,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -11.2 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 4,
+      "samples_water": 31,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2020-11-15",
+      "s1_time_ms": 1605442357000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2020-11-15",
+      "gap_days": 0,
+      "s2_clear_frac": 0.992,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.6 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2023-10-31",
+      "s1_time_ms": 1698754374000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2023-10-31",
+      "gap_days": 0,
+      "s2_clear_frac": 0.98,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.6 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 463,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2021-11-10",
+      "s1_time_ms": 1636546363000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2021-11-10",
+      "gap_days": 0,
+      "s2_clear_frac": 0.978,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.4 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 4,
+      "samples_water": 187,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2022-11-05",
+      "s1_time_ms": 1667650369000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2022-11-05",
+      "gap_days": 0,
+      "s2_clear_frac": 0.966,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.6 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 924,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2024-11-09",
+      "s1_time_ms": 1731110679000,
+      "orbit": 48,
+      "pass": "DESCENDING",
+      "s2_day": "2024-11-09",
+      "gap_days": 0,
+      "s2_clear_frac": 0.936,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.2 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 10,
+      "samples_water": 354,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2023-11-05",
+      "s1_time_ms": 1699186860000,
+      "orbit": 85,
+      "pass": "ASCENDING",
+      "s2_day": "2023-11-05",
+      "gap_days": 0,
+      "s2_clear_frac": 0.81,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -10.8 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2020-06-03",
+      "s1_time_ms": 1591142660000,
+      "orbit": 48,
+      "pass": "DESCENDING",
+      "s2_day": "2020-06-03",
+      "gap_days": 0,
+      "s2_clear_frac": 0.743,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -8.4 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 10,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2022-11-20",
+      "s1_time_ms": 1668902677000,
+      "orbit": 48,
+      "pass": "DESCENDING",
+      "s2_day": "2022-11-20",
+      "gap_days": 0,
+      "s2_clear_frac": 0.62,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.8 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 8,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2022-07-13",
+      "s1_time_ms": 1657714851000,
+      "orbit": 85,
+      "pass": "ASCENDING",
+      "s2_day": "2022-07-13",
+      "gap_days": 0,
+      "s2_clear_frac": 0.576,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.2 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2024-10-30",
+      "s1_time_ms": 1730290857000,
+      "orbit": 85,
+      "pass": "ASCENDING",
+      "s2_day": "2024-10-30",
+      "gap_days": 0,
+      "s2_clear_frac": 0.568,
+      "otsu": {
+        "threshold_db": -16.8,
+        "method": "otsu",
+        "reason": "Otsu on local VV histogram (class separation 12.7 dB, 15.9% dark)."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2019-09-22",
+      "s1_time_ms": 1569154351000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2019-09-22",
+      "gap_days": 0,
+      "s2_clear_frac": 0.528,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.2 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2023-07-18",
+      "s1_time_ms": 1689638679000,
+      "orbit": 48,
+      "pass": "DESCENDING",
+      "s2_day": "2023-07-18",
+      "gap_days": 0,
+      "s2_clear_frac": 0.424,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -8.6 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 8,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2021-07-13",
+      "s1_time_ms": 1626178359000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2021-07-13",
+      "gap_days": 0,
+      "s2_clear_frac": 0.378,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -10.0 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2023-09-16",
+      "s1_time_ms": 1694822682000,
+      "orbit": 48,
+      "pass": "DESCENDING",
+      "s2_day": "2023-09-16",
+      "gap_days": 0,
+      "s2_clear_frac": 0.378,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -8.6 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 10,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2020-11-20",
+      "s1_time_ms": 1605874843000,
+      "orbit": 85,
+      "pass": "ASCENDING",
+      "s2_day": "2020-11-20",
+      "gap_days": 0,
+      "s2_clear_frac": 0.362,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -10.8 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2023-11-24",
+      "s1_time_ms": 1700827973000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2023-11-25",
+      "gap_days": 1,
+      "s2_clear_frac": 1.0,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.6 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 1000,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2024-11-18",
+      "s1_time_ms": 1731931970000,
+      "orbit": 12,
+      "pass": "ASCENDING",
+      "s2_day": "2024-11-19",
+      "gap_days": 1,
+      "s2_clear_frac": 1.0,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.2 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 32,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2023-06-02",
+      "s1_time_ms": 1685708454000,
+      "orbit": 85,
+      "pass": "ASCENDING",
+      "s2_day": "2023-06-03",
+      "gap_days": 1,
+      "s2_clear_frac": 0.999,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -10.8 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 829,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2020-10-25",
+      "s1_time_ms": 1603584266000,
+      "orbit": 48,
+      "pass": "DESCENDING",
+      "s2_day": "2020-10-26",
+      "gap_days": 1,
+      "s2_clear_frac": 0.994,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -9.6 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 10,
+      "samples_water": 340,
+      "samples_dry": 1000
+    },
+    {
+      "s1_day": "2020-10-27",
+      "s1_time_ms": 1603801244000,
+      "orbit": 85,
+      "pass": "ASCENDING",
+      "s2_day": "2020-10-26",
+      "gap_days": 1,
+      "s2_clear_frac": 0.994,
+      "otsu": {
+        "threshold_db": -18.0,
+        "method": "fixed",
+        "reason": "Otsu value -11.6 dB outside plausible range; used fixed threshold."
+      },
+      "baseline_images": 5,
+      "samples_water": 157,
+      "samples_dry": 1000
+    }
+  ],
+  "samples": {
+    "total": 42317,
+    "calibration": 24871,
+    "test": 17446,
+    "water": 18317,
+    "dry": 24000
+  },
+  "calibrated_params": {
+    "threshold_mode": "fixed",
+    "default_threshold_db": -14.0,
+    "margin_db": 0.0,
+    "change_db": 0.0,
+    "otsu_min_db": -23.0,
+    "otsu_max_db": -14.0,
+    "otsu_min_separation_db": 3.0,
+    "otsu_min_class_fraction": 0.02,
+    "threshold_region_m": 5000,
+    "permanent_water_occurrence": 80,
+    "max_hand_m": 15.0,
+    "max_slope_deg": 5.0
+  },
+  "calibration_results": {
+    "samples": 24871,
+    "reference_water": 11239,
+    "reference_dry": 13632,
+    "coverage": 0.9585,
+    "decided": {
+      "n": 23839,
+      "tp": 2657,
+      "fp": 325,
+      "fn": 8065,
+      "tn": 12792,
+      "overall_accuracy": 0.6481,
+      "precision_flood": 0.891,
+      "recall_flood": 0.2478,
+      "f1_flood": 0.3878,
+      "iou_flood": 0.2405,
+      "specificity": 0.9752,
+      "kappa": 0.2388
+    },
+    "abstentions_as_errors": {
+      "n": 24871,
+      "tp": 2657,
+      "fp": 840,
+      "fn": 8582,
+      "tn": 12792,
+      "overall_accuracy": 0.6212,
+      "precision_flood": 0.7598,
+      "recall_flood": 0.2364,
+      "f1_flood": 0.3606,
+      "iou_flood": 0.22,
+      "specificity": 0.9384,
+      "kappa": 0.186
+    }
+  },
+  "test_results": {
+    "Legacy rule (-18 dB fixed)": {
+      "samples": 17446,
+      "reference_water": 7078,
+      "reference_dry": 10368,
+      "coverage": 0.945,
+      "decided": {
+        "n": 16486,
+        "tp": 332,
+        "fp": 0,
+        "fn": 5804,
+        "tn": 10350,
+        "overall_accuracy": 0.6479,
+        "precision_flood": 1.0,
+        "recall_flood": 0.0541,
+        "f1_flood": 0.1027,
+        "iou_flood": 0.0541,
+        "specificity": 1.0,
+        "kappa": 0.067
+      },
+      "abstentions_as_errors": {
+        "n": 17446,
+        "tp": 332,
+        "fp": 18,
+        "fn": 6746,
+        "tn": 10350,
+        "overall_accuracy": 0.6123,
+        "precision_flood": 0.9486,
+        "recall_flood": 0.0469,
+        "f1_flood": 0.0894,
+        "iou_flood": 0.0468,
+        "specificity": 0.9983,
+        "kappa": 0.0532
+      }
+    },
+    "v0.3 default (uncalibrated)": {
+      "samples": 17446,
+      "reference_water": 7078,
+      "reference_dry": 10368,
+      "coverage": 0.9031,
+      "decided": {
+        "n": 15755,
+        "tp": 362,
+        "fp": 1,
+        "fn": 5424,
+        "tn": 9968,
+        "overall_accuracy": 0.6557,
+        "precision_flood": 0.9972,
+        "recall_flood": 0.0626,
+        "f1_flood": 0.1177,
+        "iou_flood": 0.0626,
+        "specificity": 0.9999,
+        "kappa": 0.0778
+      },
+      "abstentions_as_errors": {
+        "n": 17446,
+        "tp": 362,
+        "fp": 400,
+        "fn": 6716,
+        "tn": 9968,
+        "overall_accuracy": 0.5921,
+        "precision_flood": 0.4751,
+        "recall_flood": 0.0511,
+        "f1_flood": 0.0923,
+        "iou_flood": 0.0484,
+        "specificity": 0.9614,
+        "kappa": 0.0146
+      }
+    },
+    "v0.3 calibrated": {
+      "samples": 17446,
+      "reference_water": 7078,
+      "reference_dry": 10368,
+      "coverage": 0.9563,
+      "decided": {
+        "n": 16683,
+        "tp": 1818,
+        "fp": 204,
+        "fn": 4872,
+        "tn": 9789,
+        "overall_accuracy": 0.6957,
+        "precision_flood": 0.8991,
+        "recall_flood": 0.2717,
+        "f1_flood": 0.4174,
+        "iou_flood": 0.2637,
+        "specificity": 0.9796,
+        "kappa": 0.2841
+      },
+      "abstentions_as_errors": {
+        "n": 17446,
+        "tp": 1818,
+        "fp": 579,
+        "fn": 5260,
+        "tn": 9789,
+        "overall_accuracy": 0.6653,
+        "precision_flood": 0.7584,
+        "recall_flood": 0.2569,
+        "f1_flood": 0.3837,
+        "iou_flood": 0.2374,
+        "specificity": 0.9442,
+        "kappa": 0.2246
+      }
+    }
+  },
+  "limitations": [
+    "Reference is Sentinel-2 optical water, not field observation; it misses water under crop canopy and can mislabel turbid floodwater or wet soil.",
+    "Sentinel-1 and Sentinel-2 passes can differ by up to the stated gap; water levels change.",
+    "Samples are class-balanced; real-world flood prevalence differs, so precision on actual claims may be lower than shown.",
+    "Pairs are limited to dates with cloud-free optical data, which are rare at flood peak.",
+    "Accuracy is specific to this region and period; re-validate before use elsewhere."
+  ]
+}

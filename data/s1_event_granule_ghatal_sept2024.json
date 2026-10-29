@@ -1,0 +1,30 @@
+{
+  "source": "Copernicus Data Space Ecosystem OData catalogue (catalogue.dataspace.copernicus.eu/odata/v1/Products)",
+  "retrieved_utc": "2026-10-25T11:38:51Z",
+  "query": "Collection SENTINEL-1, product contains 'GRD', footprint intersects POINT(87.7218 22.6654), ContentDate/Start 2024-09-10 to 2024-09-28",
+  "raw_response_file": "data/cdse_s1_query_raw_20261025.json",
+  "lookup_script": "scripts/cdse_s1_granule_lookup.py",
+  "note": "Sentinel-1B was out of service and Sentinel-1C was not yet launched in September 2024, so all passes are Sentinel-1A. There was NO Sentinel-1 GRD acquisition over Ghatal on 18 September 2024.",
+  "event_granule": {
+    "granule_name": "S1A_IW_GRDH_1SDV_20240919T121250_20240919T121315_055734_06CEC2_FD14",
+    "cdse_product_id": "26947a1a-d8ec-444f-a4a9-7b74f1592482",
+    "acquisition_start_utc": "2024-09-19T12:12:50.332521Z",
+    "acquisition_end_utc": "2024-09-19T12:13:15.331961Z",
+    "acquisition_start_ist": "2024-09-19T17:42:50+05:30",
+    "platform": "Sentinel-1A",
+    "mode": "IW",
+    "product_type": "IW_GRDH_1S",
+    "polarisation": "VV&VH",
+    "orbit_direction": "ASCENDING",
+    "relative_orbit": 12,
+    "absolute_orbit": 55734,
+    "expected_gee_system_index_prefix": "S1A_IW_GRDH_1SDV_20240919T121250_20240919T121315_055734_06CEC2"
+  },
+  "other_passes_in_window": [
+    {"start_utc": "2024-09-10T00:04:38.499197Z", "orbit_direction": "DESCENDING", "relative_orbit": 48, "granule_name": "S1A_IW_GRDH_1SDV_20240910T000438_20240910T000503_055595_06C947_8BD9"},
+    {"start_utc": "2024-09-12T12:20:56.212726Z", "orbit_direction": "ASCENDING", "relative_orbit": 85, "granule_name": "S1A_IW_GRDH_1SDV_20240912T122056_20240912T122121_055632_06CAB6_CDEF"},
+    {"start_utc": "2024-09-22T00:04:38.962414Z", "orbit_direction": "DESCENDING", "relative_orbit": 48, "granule_name": "S1A_IW_GRDH_1SDV_20240922T000438_20240922T000503_055770_06D027_C754"},
+    {"start_utc": "2024-09-24T12:20:56.474392Z", "orbit_direction": "ASCENDING", "relative_orbit": 85, "granule_name": "S1A_IW_GRDH_1SDV_20240924T122056_20240924T122121_055807_06D1A1_C695"}
+  ],
+  "baseline_rule": "Pre-flood baseline must use the SAME relative orbit (12) and pass direction (ASCENDING) as the event granule, so incidence-angle differences do not masquerade as flood change. Expected 12-day-repeat baseline dates: 2024-09-07, 2024-08-26, 2024-08-14."
+}

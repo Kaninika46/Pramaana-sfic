@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, record_badge, analysis_badge with context %}
+{% block title %}Reviewer dashboard{% endblock %}
+{% block content %}
+<div class="panel-header">
+  <div><h1>Reviewer dashboard</h1>
+    <p class="muted small">Internal review workflow. Decisions here are not insurer, court or government decisions.</p></div>
+  <div class="actions">
+    <a class="btn btn-secondary" href="{{ url_for('reviewer_audit') }}">Audit log</a>
+    <form method="post" action="{{ url_for('reviewer_demo') }}" class="inline-form"
+          data-confirm="Create a SYNTHETIC demonstration case? It will be labelled as not real evidence.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-secondary" type="submit">＋ Synthetic demo case</button>
+    </form>
+  </div>
+</div>
+
+{% if not ee_state.ready %}
+<div class="notice notice-warn"><strong>{{ ee_state.message }}</strong>
+  Other parts of the workflow continue to work. Set <code>GEE_PROJECT_ID</code> (and optionally a service account), then
+  <form method="post" action="{{ url_for('reviewer_ee_recheck') }}" class="inline-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-small btn-secondary" type="submit">re-check</button></form>
+</div>
+{% endif %}
+
+<div class="counts" aria-label="Cases by status">
+  <a href="{{ url_for('reviewer_dashboard') }}" class="badge {{ 'badge-blue' if not f_status else 'badge-grey' }}">All</a>
+  {% for s, n in counts.items() %}{% if n %}
+    <a href="{{ url_for('reviewer_dashboard', status=s) }}" class="badge {{ 'badge-blue' if f_status == s else 'badge-grey' }}">{{ s|label('status') }}: {{ n }}</a>
+  {% endif %}{% endfor %}
+</div>
+
+<form class="panel filters" method="get" action="{{ url_for('reviewer_dashboard') }}" role="search">
+  <div class="form-group"><label for="q">Case ID or village</label>
+    <input type="search" id="q" name="q" value="{{ f_q }}"></div>
+  <div class="form-group"><label for="status">Status</label>
+    <select id="status" name="status"><option value="">Any</option>
+      {% for s in L.status %}<option value="{{ s }}" {% if f_status == s %}selected{% endif %}>{{ s|label('status') }}</option>{% endfor %}</select></div>
+  <div class="form-group"><label for="type">Record type</label>
+    <select id="type" name="type"><option value="">Any</option>
+      {% for k, v in L.record_type.items() %}<option value="{{ k }}" {% if f_type == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+  <button class="btn btn-primary" type="submit">Filter</button>
+</form>
+
+{% if cases %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Case</th><th>Status</th><th>Village · crop</th><th>Evidence integrity</th><th>Satellite</th><th>Deadline</th><th>Gaps</th></tr></thead>
+  <tbody>
+  {% for row in cases %}{% set c = row.case %}
+    <tr>
+      <td><a class="case-id" href="{{ url_for('reviewer_case', case_id=c.case_id) }}">{{ c.case_id }}</a><br>
+        {{ record_badge(c.record_type) }}<br><span class="small muted">{{ c.created_at_utc }}</span></td>
+      <td>{{ status_badge(c.status) }}{% if c.erasure_requested_at_utc and c.status != 'ERASED' %}<br><span class="badge badge-red">Erasure requested</span>{% endif %}</td>
+      <td>{{ c.village or '—' }}<br><span class="small muted">{{ c.crop or '' }}</span></td>
+      <td>{{ row.evidence_count }} file(s)<br>
+        {% if row.mismatch %}<span class="badge badge-red">✗ {{ row.mismatch }} failed</span>
+        {% elif row.evidence_count and row.checked == row.evidence_count %}<span class="badge badge-green">✓ all {{ row.checked }} checked</span>
+        {% elif row.evidence_count %}<span class="badge badge-amber">○ {{ row.checked }}/{{ row.evidence_count }} checked</span>{% endif %}</td>
+      <td>{{ analysis_badge(row.satellite) }}</td>
+      <td class="small">{% if row.deadline.state == 'open' %}<span class="badge badge-amber">{{ 'Simulated' if row.deadline.is_simulated else 'Provisional' }}: open</span>
+        {% elif row.deadline.state == 'passed' %}<span class="badge badge-red">Window ended</span>
+        {% else %}<span class="badge badge-grey">Needs verification</span>{% endif %}</td>
+      <td>{% if row.gaps %}<span class="badge badge-amber">{{ row.gaps }}</span>{% else %}<span class="badge badge-green">0</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty">
+  <p><strong>No cases match.</strong></p>
+  <p class="small">Cases appear here when farmers or field operators submit a report. For a demonstration, create a synthetic case above.</p>
+</div>
+{% endif %}
+{% if legacy_count %}
+<p class="small muted">{{ legacy_count }} record(s) from the pre-upgrade in-memory version are kept read-only in the <a href="{{ url_for('reviewer_audit') }}#legacy">audit log</a>.</p>
+{% endif %}
+{% endblock %}

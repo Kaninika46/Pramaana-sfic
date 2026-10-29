@@ -1,0 +1,320 @@
+{
+  "rule": "Step 3 (read-only): check selected documented-flood rows against Sentinel-2.\n\nRule, fixed before running (same thresholds as scripts/monitor_flood.py):\n  - Optical scene: clear Sentinel-2 pixels (SCL 4/5/6, cloud prob < 20) within\n    +/- WINDOW_DAYS of the radar pass, mosaicked; 250 m radius around the point.\n  - Water: MNDWI >= 0.1. Dry: MNDWI <= -0.15.\n  - Part A, the 6 dry-year false alarms: among pixels the model classed as flood\n    and that have a clear optical view, verdict =\n      'real water'   if >= 50 % optical water,\n      'false alarm'  if >= 50 % optical dry,\n      'mixed'        otherwise,\n      'no clear view' if fewer than MIN_PIXELS such pixels.\n  - Part B, the 2023-10-07 and 2024-09-19 flood-zone rows (the weak detections):\n    share of the clear area that is optical water, and the model's flood % on those\n    same clear pixels. 'missed water' if optical water >= 20 % of the clear area\n    while the model flags < 20 %; otherwise 'agrees'; 'no clear view' if fewer than\n    MIN_PIXELS clear pixels.\nThe model is run exactly as the app runs it (gee_fetcher internals, frozen files).\n",
+  "source_results": "documented_floods_results_20261029T175702Z.json",
+  "rows": [
+    {
+      "part": "A_dry_false_alarm",
+      "point": "FZ3",
+      "date": "2018-09-03",
+      "model_flood_pct": 50.0,
+      "s2_dates": [],
+      "verdict": "no clear view",
+      "reason": "No Sentinel-2 image within 3 days."
+    },
+    {
+      "part": "A_dry_false_alarm",
+      "point": "FZ1",
+      "date": "2019-09-01",
+      "model_flood_pct": 28.7,
+      "s2_dates": [
+        "2019-09-02"
+      ],
+      "counts": {
+        "clear": 530,
+        "flood_clear": 0,
+        "flood_dry": 0,
+        "flood_water": 0,
+        "water": 0
+      },
+      "verdict": "no clear view"
+    },
+    {
+      "part": "A_dry_false_alarm",
+      "point": "FZ3",
+      "date": "2019-09-01",
+      "model_flood_pct": 26.8,
+      "s2_dates": [
+        "2019-09-02"
+      ],
+      "counts": {
+        "clear": 211,
+        "flood_clear": 5,
+        "flood_dry": 2,
+        "flood_water": 0,
+        "water": 0
+      },
+      "verdict": "no clear view"
+    },
+    {
+      "part": "A_dry_false_alarm",
+      "point": "FZ2",
+      "date": "2022-09-06",
+      "model_flood_pct": 22.2,
+      "s2_dates": [
+        "2022-09-06"
+      ],
+      "counts": {
+        "clear": 0,
+        "flood_clear": 0,
+        "flood_dry": 0,
+        "flood_water": 0,
+        "water": 0
+      },
+      "verdict": "no clear view"
+    },
+    {
+      "part": "A_dry_false_alarm",
+      "point": "FZ3",
+      "date": "2022-09-06",
+      "model_flood_pct": 29.2,
+      "s2_dates": [
+        "2022-09-06"
+      ],
+      "counts": {
+        "clear": 0,
+        "flood_clear": 0,
+        "flood_dry": 0,
+        "flood_water": 0,
+        "water": 0
+      },
+      "verdict": "no clear view"
+    },
+    {
+      "part": "A_dry_false_alarm",
+      "point": "FZ4",
+      "date": "2022-09-06",
+      "model_flood_pct": 27.9,
+      "s2_dates": [
+        "2022-09-06"
+      ],
+      "counts": {
+        "clear": 0,
+        "flood_clear": 0,
+        "flood_dry": 0,
+        "flood_water": 0,
+        "water": 0
+      },
+      "verdict": "no clear view"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ1",
+      "date": "2023-10-07",
+      "model_flood_pct": 10.0,
+      "s2_dates": [
+        "2023-10-06"
+      ],
+      "counts": {
+        "clear": 1141,
+        "flood_clear": 1,
+        "flood_dry": 1,
+        "flood_water": 0,
+        "water": 0
+      },
+      "optical_water_pct": 0.0,
+      "model_flood_pct_on_clear": 0.1,
+      "verdict": "agrees"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ2",
+      "date": "2023-10-07",
+      "model_flood_pct": 3.9,
+      "s2_dates": [
+        "2023-10-06"
+      ],
+      "counts": {
+        "clear": 0,
+        "flood_clear": 0,
+        "flood_dry": 0,
+        "flood_water": 0,
+        "water": 0
+      },
+      "verdict": "no clear view"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ3",
+      "date": "2023-10-07",
+      "model_flood_pct": 12.8,
+      "s2_dates": [
+        "2023-10-06"
+      ],
+      "counts": {
+        "clear": 274,
+        "flood_clear": 22,
+        "flood_dry": 16,
+        "flood_water": 0,
+        "water": 0
+      },
+      "optical_water_pct": 0.0,
+      "model_flood_pct_on_clear": 8.0,
+      "verdict": "agrees"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ4",
+      "date": "2023-10-07",
+      "model_flood_pct": 0.8,
+      "s2_dates": [
+        "2023-10-06"
+      ],
+      "counts": {
+        "clear": 68,
+        "flood_clear": 2,
+        "flood_dry": 0,
+        "flood_water": 0,
+        "water": 0
+      },
+      "verdict": "no clear view"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ5",
+      "date": "2023-10-07",
+      "model_flood_pct": 14.4,
+      "s2_dates": [
+        "2023-10-06"
+      ],
+      "counts": {
+        "clear": 585,
+        "flood_clear": 22,
+        "flood_dry": 11,
+        "flood_water": 0,
+        "water": 0
+      },
+      "optical_water_pct": 0.0,
+      "model_flood_pct_on_clear": 3.8,
+      "verdict": "agrees"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ6",
+      "date": "2023-10-07",
+      "model_flood_pct": 8.6,
+      "s2_dates": [
+        "2023-10-06"
+      ],
+      "counts": {
+        "clear": 0,
+        "flood_clear": 0,
+        "flood_dry": 0,
+        "flood_water": 0,
+        "water": 0
+      },
+      "verdict": "no clear view"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ1",
+      "date": "2024-09-19",
+      "model_flood_pct": 12.0,
+      "s2_dates": [
+        "2024-09-20"
+      ],
+      "counts": {
+        "clear": 2105,
+        "flood_clear": 252,
+        "flood_dry": 0,
+        "flood_water": 42,
+        "water": 63
+      },
+      "optical_water_pct": 3.0,
+      "model_flood_pct_on_clear": 12.0,
+      "verdict": "agrees"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ2",
+      "date": "2024-09-19",
+      "model_flood_pct": 4.3,
+      "s2_dates": [
+        "2024-09-20"
+      ],
+      "counts": {
+        "clear": 2107,
+        "flood_clear": 90,
+        "flood_dry": 7,
+        "flood_water": 77,
+        "water": 88
+      },
+      "optical_water_pct": 4.2,
+      "model_flood_pct_on_clear": 4.3,
+      "verdict": "agrees"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ3",
+      "date": "2024-09-19",
+      "model_flood_pct": 79.0,
+      "s2_dates": [
+        "2024-09-20"
+      ],
+      "counts": {
+        "clear": 2107,
+        "flood_clear": 1664,
+        "flood_dry": 6,
+        "flood_water": 1546,
+        "water": 1658
+      },
+      "optical_water_pct": 78.7,
+      "model_flood_pct_on_clear": 79.0,
+      "verdict": "agrees"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ4",
+      "date": "2024-09-19",
+      "model_flood_pct": 0.7,
+      "s2_dates": [
+        "2024-09-20"
+      ],
+      "counts": {
+        "clear": 2107,
+        "flood_clear": 15,
+        "flood_dry": 1,
+        "flood_water": 8,
+        "water": 16
+      },
+      "optical_water_pct": 0.8,
+      "model_flood_pct_on_clear": 0.7,
+      "verdict": "agrees"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ5",
+      "date": "2024-09-19",
+      "model_flood_pct": 8.1,
+      "s2_dates": [
+        "2024-09-20"
+      ],
+      "counts": {
+        "clear": 2051,
+        "flood_clear": 129,
+        "flood_dry": 2,
+        "flood_water": 45,
+        "water": 128
+      },
+      "optical_water_pct": 6.2,
+      "model_flood_pct_on_clear": 6.3,
+      "verdict": "agrees"
+    },
+    {
+      "part": "B_weak_detection",
+      "point": "FZ6",
+      "date": "2024-09-19",
+      "model_flood_pct": 9.8,
+      "s2_dates": [
+        "2024-09-20"
+      ],
+      "counts": {
+        "clear": 0,
+        "flood_clear": 0,
+        "flood_dry": 0,
+        "flood_water": 0,
+        "water": 0
+      },
+      "verdict": "no clear view"
+    }
+  ]
+}

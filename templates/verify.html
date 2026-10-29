@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Verify a file{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<section class="panel">
+  <h1>Verify a file</h1>
+  <p>Choose a dossier PDF or an evidence file. Pramaana computes its SHA-256 fingerprint and checks
+    whether it matches a file it recorded. The file is not saved.</p>
+  <form method="post" action="{{ url_for('verify_file') }}" enctype="multipart/form-data" data-busy-text="Checking…">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group"><label for="file">File <span class="req">*</span></label>
+      <input type="file" id="file" name="file" required></div>
+    <button type="submit" class="btn btn-primary">Check file</button>
+  </form>
+</section>
+
+{% if result %}
+<section class="panel" aria-live="polite">
+  {% if result.error %}<div class="notice notice-danger">{{ result.error }}</div>
+  {% else %}
+    <h2>Result for {{ result.filename }}</h2>
+    <p class="hash">SHA-256: {{ result.sha256 }}</p>
+    {% if result.documents or result.evidence %}
+      <div class="notice notice-success"><strong>✓ Match found.</strong> This file is byte-for-byte identical to a file Pramaana recorded:</div>
+      <ul class="bullets">
+        {% for d in result.documents %}<li>Dossier {{ d.doc_id }} (version {{ d.version }}) for case {{ d.case_id }}, generated {{ d.generated_at_utc }}
+          {% if d.is_synthetic %}<span class="badge badge-red">SYNTHETIC — NOT REAL EVIDENCE</span>{% endif %}</li>{% endfor %}
+        {% for e in result.evidence %}<li>Evidence {{ e.evidence_id }} ({{ e.kind|label('evidence_kind') }}) for case {{ e.case_id }}, received {{ e.uploaded_at_utc }}
+          {% if e.is_synthetic %}<span class="badge badge-red">SYNTHETIC</span>{% endif %}</li>{% endfor %}
+      </ul>
+      <p class="small muted">A match shows the file has not changed since Pramaana recorded it. It does not show that the
+        content is true, who made it, or that it is legally admissible.</p>
+    {% else %}
+      <div class="notice notice-warn"><strong>No match.</strong> Pramaana has no record of a file with this fingerprint.
+        The file may have been changed (even one byte), re-saved, or never recorded here.</div>
+    {% endif %}
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

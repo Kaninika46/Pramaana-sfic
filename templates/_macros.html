@@ -1,0 +1,93 @@
+{% macro label_for(name, required=False) -%}
+  {%- set en, bn = F[name] -%}
+  <label for="{{ name }}">{{ en }}{% if bn %} <span class="bn">({{ bn }})</span>{% endif %}
+    {% if required %}<span class="req" aria-hidden="true">*</span>{% else %}<span class="opt">optional</span>{% endif %}</label>
+{%- endmacro %}
+
+{% macro error_for(name, errors) -%}
+  {% if errors.get(name) %}<div class="field-error" id="{{ name }}-error">{{ errors[name] }}</div>{% endif %}
+{%- endmacro %}
+
+{% macro input(name, values, errors, type="text", required=False, hint=None, attrs="") -%}
+<div class="form-group{% if errors.get(name) %} has-error{% endif %}">
+  {{ label_for(name, required) }}
+  <input type="{{ type }}" id="{{ name }}" name="{{ name }}" value="{{ values.get(name, '') }}"
+         data-summary-label="{{ F[name][0] }}"
+         {% if required %}required aria-required="true"{% endif %}
+         {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% elif hint %}aria-describedby="{{ name }}-hint"{% endif %}
+         {{ attrs|safe }}>
+  {% if hint %}<div class="hint" id="{{ name }}-hint">{{ hint }}</div>{% endif %}
+  {{ error_for(name, errors) }}
+</div>
+{%- endmacro %}
+
+{% macro select(name, values, errors, options, default=None, required=False, hint=None) -%}
+<div class="form-group{% if errors.get(name) %} has-error{% endif %}">
+  {{ label_for(name, required) }}
+  {% set cur = values.get(name, default) %}
+  <select id="{{ name }}" name="{{ name }}" data-summary-label="{{ F[name][0] }}" {% if required %}required{% endif %}
+          {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>
+    {% for key, text in options.items() %}
+      <option value="{{ key }}" {% if key == cur %}selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+  </select>
+  {% if hint %}<div class="hint">{{ hint }}</div>{% endif %}
+  {{ error_for(name, errors) }}
+</div>
+{%- endmacro %}
+
+{% macro status_badge(status) -%}
+  {%- set cls = {'SUBMITTED':'badge-blue','UNDER_REVIEW':'badge-blue','INFO_REQUESTED':'badge-amber',
+                 'READY_FOR_SUBMISSION':'badge-green','REFERRED_FOR_LEGAL_AID':'badge-amber',
+                 'CLOSED':'badge-grey','ERASED':'badge-grey'}.get(status, 'badge-grey') -%}
+  <span class="badge {{ cls }}">{{ status|label('status') }}</span>
+{%- endmacro %}
+
+{% macro record_badge(rt) -%}
+  {% if rt == 'synthetic_demo' %}<span class="badge badge-red">⚠ SYNTHETIC — NOT REAL EVIDENCE</span>
+  {% elif rt == 'field_test' %}<span class="badge badge-amber">Field usability test</span>
+  {% else %}<span class="badge badge-grey">Real record</span>{% endif %}
+{%- endmacro %}
+
+{% macro verify_badge(result) -%}
+  {% if result == 'MATCH' %}<span class="badge badge-green">✓ Hash matches</span>
+  {% elif result in ('MISMATCH', 'FILE_MISSING') %}<span class="badge badge-red">✗ {{ 'Hash MISMATCH' if result == 'MISMATCH' else 'File missing' }}</span>
+  {% elif result == 'ERASED' %}<span class="badge badge-grey">Erased</span>
+  {% else %}<span class="badge badge-amber">○ Not yet checked</span>{% endif %}
+{%- endmacro %}
+
+{% macro analysis_badge(status) -%}
+  {%- set cls = {'completed':'badge-green','partial':'badge-amber','synthetic':'badge-red'}.get(status, 'badge-grey' if status in ('no_data',) else 'badge-red') -%}
+  {% if status %}<span class="badge {{ cls }}">{{ status|label('analysis_status') }}</span>
+  {% else %}<span class="badge badge-grey">Not run</span>{% endif %}
+{%- endmacro %}
+
+{% macro deadline_panel(deadline, server_now_ms) -%}
+<div class="deadline-box {% if deadline.state == 'passed' %}passed{% elif deadline.state != 'open' %}neutral{% endif %}">
+  <div class="actions actions-between">
+    <strong>Intimation deadline</strong>
+    {% if deadline.is_simulated %}<span class="badge badge-red">SIMULATED (synthetic case)</span>
+    {% elif deadline.verified %}<span class="badge badge-green">Rule verified</span>
+    {% else %}<span class="badge badge-amber">Provisional — unverified</span>{% endif %}
+  </div>
+  {% if deadline.state == 'open' %}
+    <div class="countdown" data-deadline-ms="{{ deadline.deadline_epoch_ms }}" data-server-now-ms="{{ server_now_ms }}"
+         data-prefix="{{ 'SIMULATED: ' if deadline.is_simulated else 'If applicable: ' }}" aria-live="off">
+      Due by {{ deadline.deadline_ist }}</div>
+  {% elif deadline.state == 'passed' %}
+    <div class="countdown">Window ended {{ deadline.deadline_ist }}</div>
+  {% endif %}
+  <p class="small">{{ deadline.message }}</p>
+  <details class="more"><summary>How this is calculated</summary>
+    <dl class="kv small">
+      <dt>Scheme (reported)</dt><dd>{{ deadline.scheme_label }}</dd>
+      <dt>Incident start (UTC)</dt><dd>{{ deadline.incident_start_utc or '—' }}{% if deadline.incident_time_assumed %} <span class="muted">(time not given — 00:00 IST assumed, the earliest possible)</span>{% endif %}</dd>
+      <dt>Rule duration</dt><dd>{{ deadline.duration_hours ~ ' hours' if deadline.duration_hours else 'None configured' }}</dd>
+      <dt>Rule source</dt><dd>{{ deadline.source or '—' }}</dd>
+      <dt>Applicability</dt><dd>{{ deadline.applicability_note }}</dd>
+      <dt>Case recorded (UTC)</dt><dd>{{ deadline.case_recorded_utc }}</dd>
+    </dl>
+    <p class="small muted">Pramaana does not file, send or forward any intimation.</p>
+  </details>
+</div>
+{%- endmacro %}
